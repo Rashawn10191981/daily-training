@@ -1,1 +1,1446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Training</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
 
+  :root {
+    --bg: #050810;
+    --bg2: #080d1a;
+    --bg3: #0c1225;
+    --panel: #0a1020;
+    --border: #1a2840;
+    --blue: #00a8ff;
+    --blue-dim: #004d7a;
+    --purple: #7b2fff;
+    --gold: #ffd700;
+    --gold-dim: #8a6900;
+    --red: #ff3366;
+    --green: #00ff88;
+    --text: #c8d8f0;
+    --text-dim: #4a6080;
+    --shadow-blue: 0 0 20px rgba(0,168,255,0.3);
+    --shadow-gold: 0 0 20px rgba(255,215,0,0.3);
+    --shadow-purple: 0 0 20px rgba(123,47,255,0.4);
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  #particles {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(0,168,255,0.04) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(123,47,255,0.05) 0%, transparent 50%);
+  }
+
+  .container { position: relative; z-index: 1; max-width: 480px; margin: 0 auto; padding: 0 0 80px; }
+
+  .header {
+    background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(5,8,16,0.9) 100%);
+    padding: 20px 20px 10px;
+    position: sticky; top: 0; z-index: 100;
+    border-bottom: 1px solid rgba(0,168,255,0.15);
+    backdrop-filter: blur(10px);
+  }
+
+  .system-msg {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--blue);
+    letter-spacing: 4px;
+    text-align: center;
+    margin-bottom: 8px;
+    text-shadow: var(--shadow-blue);
+    animation: blink 2s ease-in-out infinite;
+  }
+
+  @keyframes blink { 0%,100%{opacity:0.7} 50%{opacity:1} }
+
+  .title {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 18px;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: 3px;
+    background: linear-gradient(135deg, var(--blue), var(--purple), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 10px rgba(0,168,255,0.4));
+  }
+
+  .header-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+  }
+
+  .rank-badge {
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    color: #000;
+    font-weight: 700;
+    padding: 2px 12px;
+    font-size: 13px;
+    letter-spacing: 2px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+    cursor: default;
+  }
+
+  .streak-badge { color: var(--gold); text-shadow: var(--shadow-gold); }
+
+  .timer-section {
+    margin: 15px 20px;
+    background: linear-gradient(135deg, var(--bg2), var(--bg3));
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--blue);
+    padding: 15px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .timer-section::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%;
+    width: 60%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--blue), transparent);
+    animation: scan 3s linear infinite;
+  }
+
+  @keyframes scan { to { left: 200%; } }
+
+  .timer-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--blue);
+    margin-bottom: 8px;
+  }
+
+  .timer-display {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 36px;
+    color: var(--blue);
+    text-shadow: var(--shadow-blue);
+    letter-spacing: 4px;
+    text-align: center;
+  }
+
+  .timer-display.urgent { color: var(--red); text-shadow: 0 0 20px rgba(255,51,102,0.5); animation: blink 0.5s ease-in-out infinite; }
+
+  .timer-bar-wrap { margin-top: 10px; height: 4px; background: var(--border); }
+  .timer-bar { height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple)); transition: width 1s linear; }
+
+  .nav {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: rgba(5,8,16,0.97);
+    border-top: 1px solid var(--border);
+    display: flex;
+    backdrop-filter: blur(20px);
+    z-index: 200;
+  }
+
+  .nav-btn {
+    flex: 1; padding: 12px 4px 8px;
+    background: none; border: none; cursor: pointer;
+    color: var(--text-dim);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 1px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    transition: all 0.2s; text-transform: uppercase;
+  }
+
+  .nav-btn.active { color: var(--blue); }
+  .nav-icon { font-size: 18px; }
+
+  .section { display: none; padding: 0 20px; animation: fadeUp 0.3s ease; }
+  .section.active { display: block; }
+
+  @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+  .panel {
+    background: linear-gradient(135deg, var(--panel), var(--bg2));
+    border: 1px solid var(--border);
+    margin-bottom: 15px;
+    padding: 15px;
+    position: relative;
+  }
+
+  .panel::after {
+    content: '';
+    position: absolute;
+    bottom: 0; right: 0;
+    width: 20px; height: 20px;
+    border-bottom: 2px solid var(--blue-dim);
+    border-right: 2px solid var(--blue-dim);
+  }
+
+  .panel-title {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--blue);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .panel-title::before {
+    content: '';
+    display: block;
+    width: 3px; height: 14px;
+    background: var(--blue);
+    box-shadow: var(--shadow-blue);
+  }
+
+  .quest-card {
+    background: linear-gradient(135deg, rgba(0,168,255,0.04), rgba(123,47,255,0.04));
+    border: 1px solid var(--blue-dim);
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .quest-card.completed { border-color: var(--green); opacity: 0.7; }
+  .quest-card.completed::before { content: '✓'; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--green); font-size: 22px; font-weight: 700; }
+
+  .quest-name { font-size: 16px; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px; }
+  .quest-jp { font-size: 10px; color: var(--text-dim); margin-bottom: 4px; }
+  .quest-target { font-family: 'Share Tech Mono', monospace; font-size: 20px; color: var(--gold); text-shadow: var(--shadow-gold); }
+  .quest-reward { font-size: 11px; color: var(--purple); margin-top: 4px; font-family: 'Share Tech Mono', monospace; }
+
+  .prog-wrap { margin-top: 8px; display: flex; align-items: center; gap: 8px; }
+  .prog-bar-bg { flex: 1; height: 6px; background: var(--border); }
+  .prog-bar { height: 100%; background: linear-gradient(90deg, var(--blue), var(--purple)); transition: width 0.5s ease; }
+  .prog-text { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); min-width: 55px; text-align: right; }
+
+  .counter { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+
+  .count-btn {
+    background: var(--bg3); border: 1px solid var(--border);
+    color: var(--text); font-size: 14px; font-weight: 700;
+    width: 40px; height: 40px;
+    cursor: pointer; transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Rajdhani', sans-serif;
+  }
+
+  .count-btn:active { transform: scale(0.88); background: var(--blue-dim); border-color: var(--blue); }
+  .count-num { font-family: 'Share Tech Mono', monospace; font-size: 28px; color: var(--gold); text-shadow: var(--shadow-gold); min-width: 60px; text-align: center; }
+
+  .log-btn {
+    width: 100%; background: linear-gradient(135deg, var(--blue-dim), rgba(123,47,255,0.3));
+    border: 1px solid var(--blue); color: var(--blue);
+    font-family: 'Rajdhani', sans-serif; font-size: 14px; font-weight: 700;
+    letter-spacing: 2px; padding: 11px; cursor: pointer; transition: all 0.2s; margin-top: 10px;
+    text-transform: uppercase;
+  }
+
+  .log-btn:hover { background: linear-gradient(135deg, rgba(0,168,255,0.3), rgba(123,47,255,0.4)); box-shadow: var(--shadow-blue); }
+  .log-btn.gold { border-color: var(--gold); color: var(--gold); background: linear-gradient(135deg, rgba(255,215,0,0.08), rgba(255,215,0,0.03)); }
+  .log-btn.danger { border-color: var(--red); color: var(--red); background: rgba(255,51,102,0.05); }
+  .log-btn.dim { border-color: var(--text-dim); color: var(--text-dim); background: none; }
+
+  .stat-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .stat-icon { font-size: 18px; width: 28px; text-align: center; }
+  .stat-name { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-dim); width: 90px; letter-spacing: 1px; }
+  .stat-bar-bg { flex: 1; height: 8px; background: var(--border); }
+  .stat-bar-fill { height: 100%; transition: width 0.8s ease; }
+  .stat-val { font-family: 'Share Tech Mono', monospace; font-size: 13px; color: var(--gold); min-width: 30px; text-align: right; }
+  .stat-pts-total { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--purple); text-align: right; margin-bottom: 10px; }
+
+  .rank-block {
+    background: linear-gradient(135deg, var(--bg2), var(--bg3));
+    border: 1px solid var(--gold-dim);
+    padding: 15px;
+    margin-bottom: 15px;
+    text-align: center;
+  }
+
+  .rank-letter { font-family: 'Cinzel Decorative', serif; font-size: 52px; font-weight: 900; line-height: 1; }
+  .rank-e { color: #888; }
+  .rank-d { color: #4488ff; text-shadow: 0 0 20px rgba(68,136,255,0.5); }
+  .rank-c { color: #44ff88; text-shadow: 0 0 20px rgba(68,255,136,0.5); }
+  .rank-b { color: #ff8844; text-shadow: 0 0 20px rgba(255,136,68,0.5); }
+  .rank-a { color: #cc44ff; text-shadow: 0 0 20px rgba(204,68,255,0.6); }
+  .rank-s { color: var(--gold); text-shadow: 0 0 30px rgba(255,215,0,0.8), 0 0 60px rgba(255,215,0,0.4); animation: goldPulse 2s ease-in-out infinite; }
+  @keyframes goldPulse { 0%,100%{filter:brightness(1)} 50%{filter:brightness(1.3)} }
+
+  .rank-caption { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--text-dim); margin-top: 4px; }
+  .rank-next-info { font-size: 12px; color: var(--text-dim); margin-top: 8px; font-family: 'Share Tech Mono', monospace; }
+
+  .lb-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px; border-bottom: 1px solid var(--border);
+    transition: background 0.2s;
+  }
+  .lb-row:hover { background: rgba(0,168,255,0.04); }
+  .lb-pos { font-family: 'Share Tech Mono', monospace; font-size: 14px; color: var(--text-dim); width: 28px; text-align: center; }
+  .lb-pos.p1 { color: var(--gold); text-shadow: var(--shadow-gold); }
+  .lb-pos.p2 { color: #c0c0c0; }
+  .lb-pos.p3 { color: #cd7f32; }
+  .lb-username { flex: 1; font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .lb-rbadge { font-family: 'Share Tech Mono', monospace; font-size: 10px; padding: 2px 6px; background: var(--bg3); border: 1px solid var(--border); }
+  .lb-pts { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--blue); }
+  .lb-self { border: 1px solid rgba(0,168,255,0.3); background: rgba(0,168,255,0.04); }
+
+  .battle-arena {
+    background: linear-gradient(180deg, #0a0015 0%, #050810 100%);
+    border: 1px solid var(--purple);
+    padding: 20px;
+    margin-bottom: 15px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .battle-arena::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(123,47,255,0.07) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .fighters { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .fighter { text-align: center; flex: 1; }
+  .fighter-name { font-size: 13px; font-weight: 700; letter-spacing: 2px; margin-bottom: 4px; }
+  .fighter-rank { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); margin-bottom: 8px; }
+  .hp-bar { height: 8px; background: var(--border); margin-bottom: 4px; }
+  .hp-fill { height: 100%; transition: width 0.8s ease; }
+  .hp-text { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); }
+  .vs-text { font-family: 'Cinzel Decorative', serif; font-size: 24px; color: var(--purple); text-shadow: var(--shadow-purple); flex-shrink: 0; }
+
+  .battle-log {
+    background: rgba(0,0,0,0.6);
+    border: 1px solid var(--border);
+    padding: 10px;
+    height: 110px;
+    overflow-y: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    margin: 12px 0;
+  }
+
+  .blog-line { margin-bottom: 4px; }
+  .blog-line.hit { color: var(--blue); }
+  .blog-line.ehit { color: var(--red); }
+  .blog-line.sys { color: var(--gold); }
+  .blog-line.win { color: var(--green); }
+  .blog-line.lose { color: var(--red); }
+
+  .battle-btns { display: flex; gap: 8px; }
+
+  .battle-btn {
+    flex: 1; padding: 11px 4px; background: var(--bg3);
+    border: 1px solid var(--purple); color: var(--purple);
+    font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: 1px; cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+  }
+
+  .battle-btn:hover:not(:disabled) { background: rgba(123,47,255,0.2); box-shadow: var(--shadow-purple); }
+  .battle-btn.atk { border-color: var(--blue); color: var(--blue); }
+  .battle-btn.atk:hover:not(:disabled) { background: rgba(0,168,255,0.2); }
+  .battle-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .friend-card {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px; border: 1px solid var(--border); margin-bottom: 8px;
+    background: linear-gradient(135deg, var(--panel), var(--bg2));
+    transition: all 0.2s;
+  }
+
+  .friend-card:hover { border-color: var(--blue); }
+
+  .friend-avatar {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--blue-dim), var(--purple));
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700;
+    font-family: 'Cinzel Decorative', serif;
+    color: var(--gold); flex-shrink: 0;
+    letter-spacing: 0;
+  }
+
+  .friend-info { flex: 1; }
+  .friend-name { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+  .friend-sub { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+
+  .challenge-btn {
+    background: none; border: 1px solid var(--purple); color: var(--purple);
+    font-family: 'Rajdhani', sans-serif; font-size: 11px; font-weight: 700;
+    letter-spacing: 1px; padding: 7px 10px; cursor: pointer; transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .challenge-btn:hover { background: rgba(123,47,255,0.2); }
+
+  #map-container {
+    width: 100%; height: 200px;
+    background: var(--bg2); border: 1px solid var(--border);
+    margin-bottom: 10px; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .map-msg { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-dim); letter-spacing: 2px; text-align: center; }
+  #route-canvas { position: absolute; inset: 0; display: none; }
+
+  .run-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+  .run-cell { background: var(--bg3); border: 1px solid var(--border); padding: 10px; text-align: center; }
+  .run-val { font-family: 'Share Tech Mono', monospace; font-size: 20px; color: var(--blue); text-shadow: var(--shadow-blue); }
+  .run-label { font-size: 9px; color: var(--text-dim); letter-spacing: 2px; margin-top: 2px; }
+
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 1000;
+    background: rgba(0,0,0,0.88);
+    align-items: center; justify-content: center;
+    backdrop-filter: blur(6px);
+    display: none;
+  }
+
+  .modal-overlay.open { display: flex; animation: fadeUp 0.2s ease; }
+
+  .modal {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-top: 2px solid var(--blue);
+    padding: 25px; width: 90%; max-width: 380px;
+    position: relative;
+    animation: fadeUp 0.3s ease;
+  }
+
+  .modal-title { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 4px; color: var(--blue); margin-bottom: 20px; }
+  .close-btn { position: absolute; top: 14px; right: 14px; background: none; border: none; color: var(--text-dim); font-size: 22px; cursor: pointer; line-height: 1; }
+  .close-btn:hover { color: var(--text); }
+
+  .field-label { font-family: 'Share Tech Mono', monospace; font-size: 9px; letter-spacing: 3px; color: var(--blue); display: block; margin-bottom: 6px; margin-top: 14px; }
+  .field-label:first-child { margin-top: 0; }
+
+  .sys-input {
+    width: 100%; background: var(--bg3); border: 1px solid var(--border);
+    border-bottom: 2px solid var(--blue-dim); color: var(--text);
+    font-family: 'Share Tech Mono', monospace; font-size: 16px;
+    padding: 10px 14px; outline: none; transition: all 0.2s;
+    letter-spacing: 2px;
+  }
+
+  .sys-input:focus { border-bottom-color: var(--blue); box-shadow: 0 0 15px rgba(0,168,255,0.1); }
+  .sys-input::placeholder { color: var(--text-dim); letter-spacing: 1px; font-size: 13px; }
+
+  .pin-group { display: flex; gap: 10px; }
+
+  .pin-digit {
+    width: 55px; height: 65px; background: var(--bg3);
+    border: 1px solid var(--border); border-bottom: 2px solid var(--blue-dim);
+    color: var(--gold); font-family: 'Share Tech Mono', monospace;
+    font-size: 28px; text-align: center; outline: none; transition: all 0.2s;
+    caret-color: var(--blue);
+  }
+
+  .pin-digit:focus { border-bottom-color: var(--blue); box-shadow: 0 0 15px rgba(0,168,255,0.1); }
+
+  .auth-error { color: var(--red); font-family: 'Share Tech Mono', monospace; font-size: 11px; margin-top: 12px; text-align: center; min-height: 16px; }
+
+  .tabs { display: flex; margin-bottom: 15px; border: 1px solid var(--border); }
+  .tab { flex: 1; padding: 10px; background: none; border: none; color: var(--text-dim); font-family: 'Rajdhani', sans-serif; font-size: 12px; font-weight: 700; letter-spacing: 2px; cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+  .tab.active { background: rgba(0,168,255,0.08); color: var(--blue); border-bottom: 2px solid var(--blue); }
+
+  .notif {
+    position: fixed; top: 82px; left: 50%; transform: translateX(-50%);
+    background: var(--bg3); border: 1px solid var(--blue);
+    border-left: 3px solid var(--blue);
+    padding: 10px 18px;
+    font-family: 'Share Tech Mono', monospace; font-size: 12px;
+    color: var(--blue); z-index: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow-blue);
+    max-width: 90%;
+    display: none;
+  }
+
+  .notif.gold { border-color: var(--gold); color: var(--gold); box-shadow: var(--shadow-gold); }
+  .notif.red { border-color: var(--red); color: var(--red); box-shadow: 0 0 20px rgba(255,51,102,0.3); }
+  .notif.green { border-color: var(--green); color: var(--green); }
+
+  .penalty-wrap {
+    position: fixed; inset: 0; z-index: 900;
+    background: rgba(255,0,0,0.04);
+    display: none; align-items: center; justify-content: center;
+  }
+
+  .penalty-wrap.on { display: flex; animation: fadeUp 0.4s ease; }
+
+  .penalty-box {
+    background: rgba(255,51,102,0.08); border: 2px solid var(--red);
+    padding: 30px; text-align: center;
+    animation: penPulse 1s ease-in-out infinite;
+  }
+
+  @keyframes penPulse { 0%,100%{box-shadow:0 0 20px rgba(255,51,102,0.2)} 50%{box-shadow:0 0 60px rgba(255,51,102,0.5)} }
+
+  .pen-title { font-family: 'Cinzel Decorative', serif; font-size: 22px; color: var(--red); letter-spacing: 3px; margin-bottom: 10px; }
+  .pen-sub { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-dim); letter-spacing: 2px; margin-bottom: 20px; line-height: 1.8; }
+
+  .empty-state { text-align: center; padding: 30px; font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text-dim); letter-spacing: 2px; line-height: 2; }
+
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--blue-dim); }
+
+  .mt10 { margin-top: 10px; }
+  .mt8 { margin-top: 8px; }
+  .mb10 { margin-bottom: 10px; }
+  .mono { font-family: 'Share Tech Mono', monospace; }
+  .small { font-size: 11px; }
+  .gold-text { color: var(--gold); }
+  .blue-text { color: var(--blue); }
+  .red-text { color: var(--red); }
+  .green-text { color: var(--green); }
+  .purple-text { color: var(--purple); }
+  .dim-text { color: var(--text-dim); }
+  .center { text-align: center; }
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<!-- PENALTY -->
+<div class="penalty-wrap" id="penaltyWrap">
+  <div class="penalty-box">
+    <div class="pen-title">⚠ PENALTY ⚠</div>
+    <div class="pen-sub">QUEST FAILED<br>YOU HAVE BEEN WEAKENED<br>STATS -20%</div>
+    <button class="log-btn danger" style="margin-top:0;width:auto;padding:10px 30px" onclick="dismissPenalty()">ACCEPT PUNISHMENT</button>
+  </div>
+</div>
+
+<!-- NOTIF -->
+<div id="notif" class="notif"></div>
+
+<!-- AUTH MODAL -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <div class="modal-title" id="authModalTitle">◆ PLAYER IDENTIFICATION ◆</div>
+    <div id="authContent"></div>
+  </div>
+</div>
+
+<!-- ADD FRIEND MODAL -->
+<div class="modal-overlay" id="addFriendModal">
+  <div class="modal">
+    <div class="modal-title">◆ ADD HUNTER ◆</div>
+    <button class="close-btn" onclick="closeModal('addFriendModal')">×</button>
+    <label class="field-label">HUNTER USERNAME</label>
+    <input class="sys-input" id="friendInput" placeholder="Enter username..." maxlength="20">
+    <button class="log-btn mt10" onclick="addFriend()">SEND REQUEST</button>
+    <div id="friendResult" style="margin-top:10px;font-family:'Share Tech Mono',monospace;font-size:11px;min-height:16px"></div>
+  </div>
+</div>
+
+<!-- BATTLE PREVIEW MODAL -->
+<div class="modal-overlay" id="battleModal">
+  <div class="modal">
+    <div class="modal-title">◆ CHALLENGE HUNTER ◆</div>
+    <button class="close-btn" onclick="closeModal('battleModal')">×</button>
+    <div id="battleModalContent"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="container">
+
+  <div class="header">
+    <div class="system-msg">◆ SYSTEM MESSAGE ◆</div>
+    <div class="title">⚔ DAILY TRAINING</div>
+    <div class="header-info">
+      <div id="hUser" class="mono small blue-text" style="cursor:pointer" onclick="openAuthFlow()">[ LOG IN ]</div>
+      <div class="rank-badge" id="hRank">E</div>
+      <div class="streak-badge mono small" id="hStreak">🔥 0</div>
+    </div>
+  </div>
+
+  <div class="timer-section">
+    <div class="timer-label">◆ QUEST EXPIRES IN</div>
+    <div class="timer-display" id="timerDisplay">00:00:00</div>
+    <div class="timer-bar-wrap"><div class="timer-bar" id="timerBar" style="width:100%"></div></div>
+  </div>
+
+  <!-- HOME -->
+  <div class="section active" id="sec-home">
+    <div class="panel">
+      <div class="panel-title">◆ TODAY'S QUESTS</div>
+      <div id="questCards"></div>
+    </div>
+    <div class="rank-block">
+      <div class="rank-caption">CURRENT RANK</div>
+      <div class="rank-letter rank-e" id="homeRank">E</div>
+      <div class="rank-caption" id="homeRankName">E-RANK HUNTER</div>
+      <div class="rank-next-info" id="homeRankNext"></div>
+    </div>
+  </div>
+
+  <!-- TRAIN -->
+  <div class="section" id="sec-train">
+    <div class="panel">
+      <div class="panel-title">◆ PUSH-UPS / 腕立て伏せ</div>
+      <div class="counter">
+        <button class="count-btn" onclick="adj('pu',-10)">-10</button>
+        <button class="count-btn" onclick="adj('pu',-1)">-</button>
+        <div class="count-num" id="pu-n">0</div>
+        <button class="count-btn" onclick="adj('pu',1)">+</button>
+        <button class="count-btn" onclick="adj('pu',10)">+10</button>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-bar-bg"><div class="prog-bar" id="pu-bar" style="width:0%"></div></div>
+        <div class="prog-text" id="pu-prog">0 / 100</div>
+      </div>
+      <button class="log-btn mt10" onclick="logEx('pu')">LOG PUSH-UPS</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">◆ SIT-UPS / 腹筋</div>
+      <div class="counter">
+        <button class="count-btn" onclick="adj('su',-10)">-10</button>
+        <button class="count-btn" onclick="adj('su',-1)">-</button>
+        <div class="count-num" id="su-n">0</div>
+        <button class="count-btn" onclick="adj('su',1)">+</button>
+        <button class="count-btn" onclick="adj('su',10)">+10</button>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-bar-bg"><div class="prog-bar" id="su-bar" style="width:0%"></div></div>
+        <div class="prog-text" id="su-prog">0 / 100</div>
+      </div>
+      <button class="log-btn mt10" onclick="logEx('su')">LOG SIT-UPS</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">◆ SQUATS / スクワット</div>
+      <div class="counter">
+        <button class="count-btn" onclick="adj('sq',-10)">-10</button>
+        <button class="count-btn" onclick="adj('sq',-1)">-</button>
+        <div class="count-num" id="sq-n">0</div>
+        <button class="count-btn" onclick="adj('sq',1)">+</button>
+        <button class="count-btn" onclick="adj('sq',10)">+10</button>
+      </div>
+      <div class="prog-wrap">
+        <div class="prog-bar-bg"><div class="prog-bar" id="sq-bar" style="width:0%"></div></div>
+        <div class="prog-text" id="sq-prog">0 / 100</div>
+      </div>
+      <button class="log-btn mt10" onclick="logEx('sq')">LOG SQUATS</button>
+    </div>
+  </div>
+
+  <!-- RUN -->
+  <div class="section" id="sec-run">
+    <div class="panel">
+      <div class="panel-title">◆ GPS RUN TRACKER</div>
+      <div id="map-container">
+        <div class="map-msg" id="mapMsg">🗺<br><br>AWAITING GPS SIGNAL</div>
+        <canvas id="route-canvas"></canvas>
+      </div>
+      <div class="run-grid">
+        <div class="run-cell"><div class="run-val" id="rDist">0.00</div><div class="run-label">KM</div></div>
+        <div class="run-cell"><div class="run-val" id="rTime">00:00</div><div class="run-label">TIME</div></div>
+        <div class="run-cell"><div class="run-val" id="rPace">--:--</div><div class="run-label">PACE/KM</div></div>
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="log-btn" id="runBtn" onclick="toggleRun()" style="margin-top:0">START RUN</button>
+        <button class="log-btn danger" id="endRunBtn" onclick="endRun()" style="margin-top:0;display:none">END & LOG</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="section" id="sec-status">
+    <div class="panel">
+      <div class="panel-title">◆ HUNTER STATUS</div>
+      <div class="stat-pts-total" id="totalPts">TOTAL POWER: 0 PTS</div>
+      <div id="statsRows"></div>
+    </div>
+    <div class="rank-block">
+      <div class="rank-caption">RANK PROGRESSION</div>
+      <div class="rank-letter rank-e" id="statusRank">E</div>
+      <div id="statusRankProg" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <!-- SOCIAL -->
+  <div class="section" id="sec-social">
+    <div class="tabs">
+      <button class="tab active" onclick="socialTab('friends',this)">FRIENDS</button>
+      <button class="tab" onclick="socialTab('lb',this)">LEADERBOARD</button>
+      <button class="tab" onclick="socialTab('battle',this)">BATTLE</button>
+    </div>
+    <div id="st-friends">
+      <div class="panel">
+        <div class="panel-title">◆ HUNTER NETWORK</div>
+        <button class="log-btn mb10" style="margin-top:0" onclick="openModal('addFriendModal')">+ ADD FRIEND</button>
+        <div id="friendsList"></div>
+      </div>
+    </div>
+    <div id="st-lb" style="display:none">
+      <div class="panel">
+        <div class="panel-title">◆ GLOBAL RANKINGS</div>
+        <div id="lbList"></div>
+      </div>
+    </div>
+    <div id="st-battle" style="display:none">
+      <div id="battleArea"></div>
+    </div>
+  </div>
+
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="goSection('home',this)"><span class="nav-icon">🏠</span>HOME</button>
+  <button class="nav-btn" onclick="goSection('train',this)"><span class="nav-icon">💪</span>TRAIN</button>
+  <button class="nav-btn" onclick="goSection('run',this)"><span class="nav-icon">🏃</span>RUN</button>
+  <button class="nav-btn" onclick="goSection('status',this)"><span class="nav-icon">📊</span>STATUS</button>
+  <button class="nav-btn" onclick="goSection('social',this)"><span class="nav-icon">⚔️</span>GUILD</button>
+</nav>
+
+<script>
+// ─── CONFIG ───────────────────────────────────────────────
+const RANKS = ['E','D','C','B','A','S'];
+const RANK_THRESH = [0, 500, 1500, 3500, 7000, 12000];
+const RANK_NAMES = ['E-RANK HUNTER','D-RANK HUNTER','C-RANK HUNTER','B-RANK HUNTER','A-RANK HUNTER','S-RANK HUNTER'];
+const STATS = ['Strength','Agility','Endurance','Vitality','Intelligence'];
+const STAT_ICONS = {Strength:'⚔️',Agility:'💨',Endurance:'🛡️',Vitality:'❤️',Intelligence:'✨'};
+const STAT_COLORS = {Strength:'#ff6644',Agility:'#44ffaa',Endurance:'#4488ff',Vitality:'#ff44aa',Intelligence:'#aa44ff'};
+const EX_STAT = {pu:'Strength',su:'Vitality',sq:'Endurance'};
+const EX_NAMES = {pu:'PUSH-UPS',su:'SIT-UPS',sq:'SQUATS'};
+const QUEST_HOURS = 6;
+
+// ─── STATE ────────────────────────────────────────────────
+let S = {
+  username: null, pin: null,
+  streak: 0, lastDate: null,
+  stats: {Strength:0,Agility:0,Endurance:0,Vitality:0,Intelligence:0},
+  today: {pu:0,su:0,sq:0,run:0,done:false},
+  friends: [],
+  timerStart: null,
+  battle: null
+};
+
+let counts = {pu:0,su:0,sq:0};
+
+// ─── STORAGE ──────────────────────────────────────────────
+const KEY = () => S.username ? `hunter:${S.username}` : 'hunter:guest';
+
+async function save() {
+  if (!window.storage) return;
+  try { await window.storage.set(KEY(), JSON.stringify(S)); } catch(e){}
+}
+
+async function loadUser(username) {
+  if (!window.storage) return null;
+  try {
+    const r = await window.storage.get(`hunter:${username}`);
+    return r ? JSON.parse(r.value) : null;
+  } catch(e){ return null; }
+}
+
+async function allUsers() {
+  if (!window.storage) return [];
+  try {
+    const r = await window.storage.list('hunter:');
+    if (!r || !r.keys) return [];
+    const out = [];
+    for (const k of r.keys) {
+      if (k === 'hunter:guest') continue;
+      try {
+        const d = await window.storage.get(k);
+        if (d) {
+          const u = JSON.parse(d.value);
+          if (u.username) out.push(u);
+        }
+      } catch(e){}
+    }
+    return out;
+  } catch(e){ return []; }
+}
+
+// ─── HELPERS ──────────────────────────────────────────────
+function totalPts(stats) { return Object.values(stats||S.stats).reduce((a,b)=>a+b,0); }
+
+function rankIdx(stats) {
+  const t = totalPts(stats||S.stats);
+  for (let i = RANK_THRESH.length-1; i >= 0; i--)
+    if (t >= RANK_THRESH[i]) return i;
+  return 0;
+}
+
+function rankOf(stats) { return RANKS[rankIdx(stats)]; }
+function rankClass(r) { return 'rank-'+r.toLowerCase(); }
+
+function targets() {
+  const b = Math.floor(S.streak / 5) * 10;
+  return {pu: 100+b, su: 100+b, sq: 100+b};
+}
+
+function hpOf(stats) { return 50 + (stats.Vitality||0)*2 + (stats.Strength||0); }
+function atkOf(stats) { return 5 + Math.floor((stats.Strength||0)*1.5) + Math.floor((stats.Agility||0)*0.5); }
+function spdOf(stats) { return (stats.Agility||0) + Math.floor((stats.Intelligence||0)*0.5); }
+
+function today() { return new Date().toDateString(); }
+
+// ─── NOTIFY ───────────────────────────────────────────────
+function notif(msg, type='') {
+  const el = document.getElementById('notif');
+  el.textContent = msg;
+  el.className = 'notif' + (type ? ' '+type : '');
+  el.style.display = 'block';
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>{ el.style.display='none'; }, 3200);
+}
+
+// ─── MODALS ───────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ─── TIMER ────────────────────────────────────────────────
+let _timerInt = null;
+
+function startTimer() {
+  if (!S.timerStart) S.timerStart = Date.now();
+  clearInterval(_timerInt);
+  _timerInt = setInterval(tickTimer, 1000);
+  tickTimer();
+}
+
+function tickTimer() {
+  const remaining = Math.max(0, QUEST_HOURS*3600000 - (Date.now()-S.timerStart));
+  const h = Math.floor(remaining/3600000);
+  const m = Math.floor((remaining%3600000)/60000);
+  const sc = Math.floor((remaining%60000)/1000);
+  const pct = (remaining/(QUEST_HOURS*3600000))*100;
+
+  document.getElementById('timerDisplay').textContent =
+    String(h).padStart(2,'0')+':'+String(m).padStart(2,'0')+':'+String(sc).padStart(2,'0');
+  document.getElementById('timerDisplay').className = 'timer-display'+(remaining<3600000?' urgent':'');
+  document.getElementById('timerBar').style.width = pct+'%';
+
+  if (remaining===0 && !S.today.done && !S._penShown) applyPenalty();
+}
+
+function applyPenalty() {
+  S._penShown = true;
+  STATS.forEach(k => S.stats[k] = Math.max(0, Math.floor(S.stats[k]*0.8)));
+  S.streak = 0;
+  save();
+  updateUI();
+  document.getElementById('penaltyWrap').classList.add('on');
+}
+
+function dismissPenalty() {
+  document.getElementById('penaltyWrap').classList.remove('on');
+  S._penShown = false;
+  S.timerStart = Date.now();
+  S.today = {pu:0,su:0,sq:0,run:0,done:false};
+  save();
+  updateUI();
+}
+
+// ─── DAY RESET ────────────────────────────────────────────
+function checkDayReset() {
+  const td = today();
+  if (S.lastDate === td) return;
+  const yday = new Date(Date.now()-86400000).toDateString();
+  if (S.lastDate && S.lastDate !== yday && !S.today.done) S.streak = 0;
+  if (S.lastDate !== td) {
+    S.today = {pu:0,su:0,sq:0,run:0,done:false};
+    S.timerStart = Date.now();
+    S._penShown = false;
+  }
+}
+
+// ─── AUTH ─────────────────────────────────────────────────
+function openAuthFlow() {
+  if (S.username) renderLoggedIn();
+  else renderLoginForm();
+  openModal('authModal');
+}
+
+function renderLoginForm() {
+  document.getElementById('authModalTitle').textContent = '◆ PLAYER IDENTIFICATION ◆';
+  document.getElementById('authContent').innerHTML = `
+    <div class="tabs mb10">
+      <button class="tab active" id="tLogin" onclick="authTab('login')">LOG IN</button>
+      <button class="tab" id="tReg" onclick="authTab('register')">REGISTER</button>
+    </div>
+    <div id="authForm"></div>
+  `;
+  authTab('login');
+}
+
+function authTab(tab) {
+  document.getElementById('tLogin').classList.toggle('active', tab==='login');
+  document.getElementById('tReg').classList.toggle('active', tab==='register');
+  if (tab==='login') {
+    document.getElementById('authForm').innerHTML = `
+      <label class="field-label">USERNAME</label>
+      <input class="sys-input" id="aUser" placeholder="Your username..." maxlength="20" autocomplete="off">
+      <label class="field-label">4-DIGIT PIN</label>
+      <div class="pin-group">
+        <input class="pin-digit" id="p0" type="password" inputmode="numeric" maxlength="1">
+        <input class="pin-digit" id="p1" type="password" inputmode="numeric" maxlength="1">
+        <input class="pin-digit" id="p2" type="password" inputmode="numeric" maxlength="1">
+        <input class="pin-digit" id="p3" type="password" inputmode="numeric" maxlength="1">
+      </div>
+      <button class="log-btn mt10" onclick="doLogin()">ENTER THE SYSTEM</button>
+      <div class="auth-error" id="authErr"></div>
+    `;
+    bindPin('p');
+  } else {
+    document.getElementById('authForm').innerHTML = `
+      <label class="field-label">CHOOSE USERNAME (3-20 chars)</label>
+      <input class="sys-input" id="aUser" placeholder="No spaces..." maxlength="20" autocomplete="off">
+      <label class="field-label">SET 4-DIGIT PIN</label>
+      <div class="pin-group">
+        <input class="pin-digit" id="p0" type="password" inputmode="numeric" maxlength="1">
+        <input class="pin-digit" id="p1" type="password" inputmode="numeric" maxlength="1">
+        <input class="pin-digit" id="p2" type="password" inputmode="numeric" maxlength="1">
+        <input class="pin-digit" id="p3" type="password" inputmode="numeric" maxlength="1">
+      </div>
+      <button class="log-btn mt10" onclick="doRegister()">AWAKEN AS HUNTER</button>
+      <div class="auth-error" id="authErr"></div>
+    `;
+    bindPin('p');
+  }
+}
+
+function bindPin(pre) {
+  for (let i=0;i<4;i++) {
+    const el = document.getElementById(pre+i);
+    if (!el) continue;
+    el.addEventListener('input',()=>{
+      el.value = el.value.replace(/\D/g,'').slice(0,1);
+      if (el.value && i<3) document.getElementById(pre+(i+1)).focus();
+    });
+    el.addEventListener('keydown',e=>{
+      if (e.key==='Backspace'&&!el.value&&i>0) document.getElementById(pre+(i-1)).focus();
+    });
+  }
+}
+
+function getPin() {
+  return [0,1,2,3].map(i=>{ const e=document.getElementById('p'+i); return e?e.value:''; }).join('');
+}
+
+function authErr(msg) {
+  const el = document.getElementById('authErr');
+  if (el) el.textContent = '[ '+msg+' ]';
+}
+
+async function doLogin() {
+  const username = document.getElementById('aUser').value.trim().toUpperCase();
+  const pin = getPin();
+  if (!username) return authErr('ENTER USERNAME');
+  if (pin.length<4) return authErr('ENTER 4-DIGIT PIN');
+
+  const data = await loadUser(username);
+  if (!data) return authErr('HUNTER NOT FOUND');
+  if (data.pin !== pin) return authErr('INCORRECT PIN');
+
+  Object.assign(S, {
+    username: data.username,
+    pin: data.pin,
+    streak: data.streak||0,
+    stats: data.stats||{Strength:0,Agility:0,Endurance:0,Vitality:0,Intelligence:0},
+    today: data.today||{pu:0,su:0,sq:0,run:0,done:false},
+    friends: data.friends||[],
+    lastDate: data.lastDate||null,
+    timerStart: data.timerStart||null,
+    battle: data.battle||null
+  });
+
+  checkDayReset();
+  closeModal('authModal');
+  updateUI();
+  notif('WELCOME BACK, '+username, 'gold');
+}
+
+async function doRegister() {
+  const username = document.getElementById('aUser').value.trim().toUpperCase().replace(/\s/g,'');
+  const pin = getPin();
+  if (!username || username.length<3) return authErr('USERNAME MIN 3 CHARS');
+  if (!/^\d{4}$/.test(pin)) return authErr('PIN MUST BE 4 DIGITS');
+
+  const existing = await loadUser(username);
+  if (existing) return authErr('USERNAME ALREADY TAKEN');
+
+  S.username = username; S.pin = pin; S.streak = 0;
+  S.stats = {Strength:0,Agility:0,Endurance:0,Vitality:0,Intelligence:0};
+  S.today = {pu:0,su:0,sq:0,run:0,done:false};
+  S.friends = []; S.timerStart = Date.now(); S.lastDate = null;
+
+  await save();
+  closeModal('authModal');
+  updateUI();
+  notif('HUNTER '+username+' AWAKENED!', 'gold');
+}
+
+function renderLoggedIn() {
+  document.getElementById('authModalTitle').textContent = '◆ HUNTER PROFILE ◆';
+  const ri = rankIdx();
+  document.getElementById('authContent').innerHTML = `
+    <div class="center" style="padding:10px 0">
+      <div class="mono gold-text" style="font-size:22px;letter-spacing:3px">${S.username}</div>
+      <div class="rank-letter ${rankClass(RANKS[ri])}" style="font-size:40px;margin:10px 0">${RANKS[ri]}</div>
+      <div class="mono small dim-text">TOTAL POWER: <span class="gold-text">${totalPts()}</span></div>
+      <div class="mono small dim-text mt8">STREAK: <span class="gold-text">🔥 ${S.streak}</span></div>
+    </div>
+    <button class="log-btn danger" onclick="doLogout()">LOG OUT</button>
+  `;
+}
+
+function doLogout() {
+  save();
+  S.username = null;
+  closeModal('authModal');
+  updateUI();
+  notif('LOGGED OUT');
+}
+
+// ─── EXERCISE ─────────────────────────────────────────────
+function adj(type, delta) {
+  counts[type] = Math.max(0, counts[type]+delta);
+  refreshCount(type);
+}
+
+function refreshCount(type) {
+  const t = targets();
+  const key = type==='pu'?'pu':type==='su'?'su':'sq';
+  const current = (S.today[key]||0) + counts[type];
+  const target = t[key];
+  document.getElementById(type+'-n').textContent = counts[type];
+  document.getElementById(type+'-bar').style.width = Math.min(100,(current/target)*100)+'%';
+  document.getElementById(type+'-prog').textContent = current+' / '+target;
+}
+
+function logEx(type) {
+  if (!counts[type]) { notif('SET COUNT FIRST', 'red'); return; }
+  const n = counts[type];
+  S.today[type] = (S.today[type]||0)+n;
+  const statKey = EX_STAT[type];
+  const pts = Math.floor(n/10);
+  if (pts>0) { S.stats[statKey]=(S.stats[statKey]||0)+pts; notif('+'+pts+' '+statKey.toUpperCase()+' ▲','gold'); }
+  counts[type] = 0;
+  checkQuestDone();
+  save();
+  updateUI();
+}
+
+function checkQuestDone() {
+  const t = targets();
+  if (S.today.pu>=t.pu && S.today.su>=t.su && S.today.sq>=t.sq && !S.today.done) {
+    S.today.done = true;
+    S.lastDate = today();
+    S.streak++;
+    S.stats.Intelligence = (S.stats.Intelligence||0)+5;
+    S.stats.Agility = (S.stats.Agility||0)+3;
+    setTimeout(()=>notif('⚔ QUEST COMPLETE! RANK PROGRESS!','gold'),300);
+  }
+}
+
+// ─── RUN ──────────────────────────────────────────────────
+let runActive=false, runWatch=null, runPts=[], runStart=null, runTick=null;
+
+function toggleRun() {
+  if (!runActive) startRun(); else pauseRun();
+}
+
+function startRun() {
+  if (!navigator.geolocation) { notif('GPS NOT AVAILABLE','red'); return; }
+  runActive=true; runPts=[]; runStart=Date.now();
+  document.getElementById('runBtn').textContent='PAUSE';
+  document.getElementById('endRunBtn').style.display='block';
+  document.getElementById('mapMsg').textContent='🗺\n\nACQUIRING GPS...';
+  runWatch = navigator.geolocation.watchPosition(
+    p=>{ runPts.push({lat:p.coords.latitude,lon:p.coords.longitude}); drawRoute(); updateRunUI(); document.getElementById('mapMsg').style.display='none'; },
+    ()=>notif('GPS ERROR','red'),
+    {enableHighAccuracy:true,maximumAge:0}
+  );
+  runTick = setInterval(updateRunUI,1000);
+}
+
+function pauseRun() {
+  runActive=false;
+  if(runWatch){navigator.geolocation.clearWatch(runWatch);runWatch=null;}
+  clearInterval(runTick);
+  document.getElementById('runBtn').textContent='RESUME';
+}
+
+function endRun() {
+  pauseRun();
+  const km = calcDist();
+  if (km<0.1){notif('TOO SHORT - MIN 0.1KM','red');return;}
+  S.today.run=(S.today.run||0)+km;
+  const pts=Math.floor(km*3);
+  S.stats.Agility=(S.stats.Agility||0)+pts;
+  S.stats.Endurance=(S.stats.Endurance||0)+Math.floor(pts/2);
+  notif('RUN: '+km.toFixed(2)+'KM +'+pts+' AGI','gold');
+  save(); updateUI();
+  runPts=[]; document.getElementById('runBtn').textContent='START RUN';
+  document.getElementById('endRunBtn').style.display='none';
+  ['rDist','rTime','rPace'].forEach(id=>document.getElementById(id).textContent=id==='rDist'?'0.00':id==='rTime'?'00:00':'--:--');
+}
+
+function calcDist() {
+  if(runPts.length<2)return 0;
+  let d=0;
+  for(let i=1;i<runPts.length;i++)d+=hav(runPts[i-1],runPts[i]);
+  return d;
+}
+
+function hav(a,b) {
+  const R=6371,dLat=(b.lat-a.lat)*Math.PI/180,dLon=(b.lon-a.lon)*Math.PI/180;
+  const h=Math.sin(dLat/2)**2+Math.cos(a.lat*Math.PI/180)*Math.cos(b.lat*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.asin(Math.sqrt(h));
+}
+
+function updateRunUI() {
+  const km=calcDist();
+  const elapsed=runStart?(Date.now()-runStart):0;
+  const m=Math.floor(elapsed/60000),s=Math.floor((elapsed%60000)/1000);
+  document.getElementById('rDist').textContent=km.toFixed(2);
+  document.getElementById('rTime').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  if(km>0){const pm=elapsed/60000/km,pm2=Math.floor(pm),ps=Math.floor((pm-pm2)*60);document.getElementById('rPace').textContent=pm2+':'+String(ps).padStart(2,'0');}
+}
+
+function drawRoute() {
+  if(runPts.length<2)return;
+  const c=document.getElementById('route-canvas');
+  c.style.display='block';
+  const rect=c.parentElement.getBoundingClientRect();
+  c.width=rect.width; c.height=rect.height;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='#080d1a'; ctx.fillRect(0,0,c.width,c.height);
+  const lats=runPts.map(p=>p.lat),lons=runPts.map(p=>p.lon);
+  const minLat=Math.min(...lats),maxLat=Math.max(...lats),minLon=Math.min(...lons),maxLon=Math.max(...lons);
+  const pad=20;
+  const tx=lon=>pad+(lon-minLon)/(maxLon-minLon||1)*(c.width-2*pad);
+  const ty=lat=>c.height-pad-(lat-minLat)/(maxLat-minLat||1)*(c.height-2*pad);
+  ctx.strokeStyle='#00a8ff'; ctx.lineWidth=2; ctx.shadowColor='#00a8ff'; ctx.shadowBlur=8;
+  ctx.beginPath();
+  runPts.forEach((p,i)=>i===0?ctx.moveTo(tx(p.lon),ty(p.lat)):ctx.lineTo(tx(p.lon),ty(p.lat)));
+  ctx.stroke();
+  ctx.fillStyle='#00ff88'; ctx.shadowColor='#00ff88'; ctx.beginPath(); ctx.arc(tx(runPts[0].lon),ty(runPts[0].lat),5,0,Math.PI*2); ctx.fill();
+  const last=runPts[runPts.length-1];
+  ctx.fillStyle='#ffd700'; ctx.shadowColor='#ffd700'; ctx.beginPath(); ctx.arc(tx(last.lon),ty(last.lat),5,0,Math.PI*2); ctx.fill();
+}
+
+// ─── FRIENDS ──────────────────────────────────────────────
+async function addFriend() {
+  const un = document.getElementById('friendInput').value.trim().toUpperCase();
+  const rEl = document.getElementById('friendResult');
+  const setRes = (msg,c) => { rEl.textContent=msg; rEl.style.color=`var(--${c})`; };
+
+  if (!S.username) return setRes('[ MUST BE LOGGED IN ]','red');
+  if (!un) return setRes('[ ENTER A USERNAME ]','red');
+  if (un===S.username) return setRes('[ CANNOT ADD YOURSELF ]','red');
+  if (S.friends.includes(un)) return setRes('[ ALREADY FRIENDS ]','red');
+
+  const data = await loadUser(un);
+  if (!data) return setRes('[ HUNTER NOT FOUND ]','red');
+
+  S.friends.push(un);
+  save();
+  document.getElementById('friendInput').value='';
+  setRes('[ '+un+' ADDED TO NETWORK ]','green');
+  renderFriends();
+  notif(un+' ADDED','green');
+}
+
+async function renderFriends() {
+  const el = document.getElementById('friendsList');
+  if (!S.username) { el.innerHTML='<div class="empty-state">LOG IN TO VIEW FRIENDS</div>'; return; }
+  if (!S.friends.length) { el.innerHTML='<div class="empty-state">NO FRIENDS YET<br>ADD HUNTERS BY USERNAME</div>'; return; }
+  el.innerHTML='<div class="mono small dim-text" style="margin-bottom:10px">LOADING...</div>';
+  let html='';
+  for (const un of S.friends) {
+    const d = await loadUser(un);
+    const ri = d?rankIdx(d.stats):0;
+    const pts = d?totalPts(d.stats):0;
+    html+=`<div class="friend-card">
+      <div class="friend-avatar">${un.charAt(0)}</div>
+      <div class="friend-info">
+        <div class="friend-name">${un}</div>
+        <div class="friend-sub">RANK ${RANKS[ri]} ◆ ${pts} PTS ◆ 🔥 ${d?d.streak:0}</div>
+      </div>
+      <button class="challenge-btn" onclick="openChallenge('${un}')">BATTLE</button>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+
+// ─── LEADERBOARD ──────────────────────────────────────────
+async function renderLeaderboard() {
+  const el = document.getElementById('lbList');
+  el.innerHTML='<div class="empty-state">LOADING...</div>';
+  const users = await allUsers();
+  if (!users.length) { el.innerHTML='<div class="empty-state">NO HUNTERS REGISTERED YET</div>'; return; }
+  users.sort((a,b)=>totalPts(b.stats)-totalPts(a.stats));
+  let html='';
+  users.forEach((u,i)=>{
+    const pos=i+1;
+    const pc=pos===1?'p1':pos===2?'p2':pos===3?'p3':'';
+    const self=u.username===S.username;
+    const ri=rankIdx(u.stats);
+    html+=`<div class="lb-row ${self?'lb-self':''}">
+      <div class="lb-pos ${pc}">${pos===1?'👑':'#'+pos}</div>
+      <div class="lb-username">${u.username}${self?' ◆':''}</div>
+      <div class="lb-rbadge ${rankClass(RANKS[ri])}">${RANKS[ri]}</div>
+      <div class="lb-pts">${totalPts(u.stats)}</div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+// ─── BATTLE ───────────────────────────────────────────────
+async function openChallenge(un) {
+  const data = await loadUser(un);
+  if (!data) { notif('HUNTER DATA NOT FOUND','red'); return; }
+  const myHP=hpOf(S.stats), eHP=hpOf(data.stats);
+  const myAtk=atkOf(S.stats), eAtk=atkOf(data.stats);
+  document.getElementById('battleModalContent').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:15px">
+      <div class="center">
+        <div class="mono blue-text" style="font-size:16px">${S.username||'YOU'}</div>
+        <div class="mono small dim-text">RANK ${rankOf()}</div>
+        <div class="mono small gold-text">HP:${myHP} ATK:${myAtk}</div>
+      </div>
+      <div class="vs-text">VS</div>
+      <div class="center">
+        <div class="mono red-text" style="font-size:16px">${un}</div>
+        <div class="mono small dim-text">RANK ${rankOf(data.stats)}</div>
+        <div class="mono small gold-text">HP:${eHP} ATK:${eAtk}</div>
+      </div>
+    </div>
+    <button class="log-btn gold" onclick="startBattle('${un}')">⚔ BEGIN BATTLE</button>
+    <button class="log-btn dim mt8" onclick="closeModal('battleModal')">RETREAT</button>
+  `;
+  openModal('battleModal');
+}
+
+async function startBattle(un) {
+  const data = await loadUser(un);
+  if (!data) return;
+  closeModal('battleModal');
+
+  S.battle = {
+    enemy: un,
+    myHP: hpOf(S.stats), myMaxHP: hpOf(S.stats),
+    eHP: hpOf(data.stats), eMaxHP: hpOf(data.stats),
+    myAtk: atkOf(S.stats), eAtk: atkOf(data.stats),
+    turn: 1, active: true, log: []
+  };
+
+  goSection('social', document.querySelectorAll('.nav-btn')[4]);
+  socialTab('battle', document.querySelectorAll('#sec-social .tab')[2]);
+  renderBattle();
+}
+
+function renderBattle() {
+  const el = document.getElementById('battleArea');
+  const b = S.battle;
+
+  if (!b) {
+    el.innerHTML='<div class="empty-state">NO ACTIVE BATTLE<br>CHALLENGE A FRIEND TO FIGHT</div>';
+    return;
+  }
+
+  const mp=Math.max(0,(b.myHP/b.myMaxHP)*100);
+  const ep=Math.max(0,(b.eHP/b.eMaxHP)*100);
+  const dis=!b.active?'disabled':'';
+  const logHTML=b.log.slice(-8).map(l=>`<div class="blog-line ${l.t}">${l.m}</div>`).join('');
+
+  el.innerHTML=`
+    <div class="battle-arena">
+      <div class="fighters">
+        <div class="fighter">
+          <div class="fighter-name blue-text">${S.username||'YOU'}</div>
+          <div class="fighter-rank">RANK ${rankOf()}</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:${mp}%;background:linear-gradient(90deg,var(--blue),var(--purple))"></div></div>
+          <div class="hp-text">${b.myHP}/${b.myMaxHP}</div>
+        </div>
+        <div class="vs-text">VS</div>
+        <div class="fighter">
+          <div class="fighter-name red-text">${b.enemy}</div>
+          <div class="fighter-rank">ENEMY</div>
+          <div class="hp-bar"><div class="hp-fill" style="width:${ep}%;background:linear-gradient(90deg,var(--red),#ff6644)"></div></div>
+          <div class="hp-text">${b.eHP}/${b.eMaxHP}</div>
+        </div>
+      </div>
+      <div class="mono small dim-text center" style="margin:8px 0">TURN ${b.turn}</div>
+      <div class="battle-log" id="blog">${logHTML}</div>
+      <div class="battle-btns">
+        <button class="battle-btn atk" ${dis} onclick="doAction('atk')">⚔ ATTACK</button>
+        <button class="battle-btn" ${dis} onclick="doAction('skill')">✨ SKILL</button>
+        <button class="battle-btn" ${dis} onclick="doAction('def')">🛡 DEFEND</button>
+      </div>
+      ${!b.active?`<button class="log-btn mt10" onclick="clearBattle()">NEW BATTLE</button>`:''}
+    </div>
+  `;
+  const blog = document.getElementById('blog');
+  if(blog) blog.scrollTop = blog.scrollHeight;
+}
+
+function doAction(act) {
+  const b = S.battle;
+  if (!b||!b.active) return;
+
+  let myDmg=0, defend=false;
+  if (act==='atk') {
+    myDmg = b.myAtk + Math.floor(Math.random()*10);
+  } else if (act==='skill') {
+    myDmg = Math.floor(b.myAtk*1.8) + Math.floor((S.stats.Intelligence||0)*0.5);
+    b.log.push({t:'sys',m:'◆ SKILL ACTIVATED — SHADOW SURGE!'});
+  } else {
+    defend=true;
+    b.log.push({t:'sys',m:'◆ DEFENSE STANCE — DMG HALVED'});
+  }
+
+  if (myDmg>0) {
+    b.eHP -= myDmg;
+    b.log.push({t:'hit',m:`▶ ${S.username||'YOU'} DEALS ${myDmg} DMG`});
+  }
+
+  if (b.eHP<=0) {
+    b.eHP=0; b.active=false;
+    b.log.push({t:'win',m:`◆ VICTORY! ${b.enemy} DEFEATED!`});
+    S.stats.Strength=(S.stats.Strength||0)+5;
+    S.stats.Intelligence=(S.stats.Intelligence||0)+3;
+    notif('BATTLE WON! +5 STR +3 INT','gold');
+    save(); renderBattle(); return;
+  }
+
+  const eDmg = Math.floor(b.eAtk*(0.8+Math.random()*0.4)*(defend?0.5:1));
+  b.myHP -= eDmg;
+  b.log.push({t:'ehit',m:`▶ ${b.enemy} DEALS ${eDmg} DMG`});
+
+  if (b.myHP<=0) {
+    b.myHP=0; b.active=false;
+    b.log.push({t:'lose',m:`◆ DEFEATED... ${b.enemy} WINS`});
+    save(); renderBattle(); return;
+  }
+
+  b.turn++;
+  renderBattle();
+}
+
+function clearBattle() { S.battle=null; renderBattle(); }
+
+// ─── UI RENDER ────────────────────────────────────────────
+function updateUI() {
+  const ri=rankIdx();
+  const rank=RANKS[ri];
+  const rc=rankClass(rank);
+  const pts=totalPts();
+
+  document.getElementById('hUser').textContent=S.username?'[ '+S.username+' ]':'[ LOG IN ]';
+  document.getElementById('hRank').textContent=rank;
+  document.getElementById('hStreak').textContent='🔥 '+S.streak;
+
+  // Home rank
+  ['homeRank'].forEach(id=>{
+    const e=document.getElementById(id);
+    if(e){e.textContent=rank;e.className='rank-letter '+rc;}
+  });
+  document.getElementById('homeRankName').textContent=RANK_NAMES[ri];
+
+  const next=Math.min(ri+1,RANKS.length-1);
+  const nxt=RANK_THRESH[next], prev=RANK_THRESH[ri];
+  const pct=ri<RANKS.length-1?((pts-prev)/(nxt-prev)*100):100;
+  const nxtTxt=ri<RANKS.length-1?`${pts} / ${nxt} PTS → ${RANKS[next]}`:'MAX RANK';
+  document.getElementById('homeRankNext').textContent=nxtTxt;
+
+  // Status rank
+  const sr=document.getElementById('statusRank');
+  if(sr){sr.textContent=rank;sr.className='rank-letter '+rc;}
+  const sp=document.getElementById('statusRankProg');
+  if(sp)sp.innerHTML=`<div class="mono small dim-text mb10">${nxtTxt}</div><div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:${pct}%"></div></div></div>`;
+
+  // Stats
+  document.getElementById('totalPts').textContent='TOTAL POWER: '+pts+' PTS';
+  const sEl=document.getElementById('statsRows');
+  if(sEl){
+    const mx=Math.max(1,...Object.values(S.stats),100);
+    sEl.innerHTML=STATS.map(n=>`<div class="stat-row">
+      <div class="stat-icon">${STAT_ICONS[n]}</div>
+      <div class="stat-name">${n.toUpperCase()}</div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${(S.stats[n]/mx)*100}%;background:${STAT_COLORS[n]}"></div></div>
+      <div class="stat-val">${S.stats[n]}</div>
+    </div>`).join('');
+  }
+
+  // Quest cards
+  const t=targets();
+  const questEl=document.getElementById('questCards');
+  if(questEl){
+    const quests=[
+      {k:'pu',name:'PUSH-UPS',jp:'腕立て伏せ',reward:'💪 STRENGTH'},
+      {k:'su',name:'SIT-UPS',jp:'腹筋',reward:'❤️ VITALITY'},
+      {k:'sq',name:'SQUATS',jp:'スクワット',reward:'🛡️ ENDURANCE'},
+    ];
+    questEl.innerHTML=quests.map(q=>{
+      const cur=S.today[q.k]||0, tgt=t[q.k], done=cur>=tgt;
+      return `<div class="quest-card ${done?'completed':''}">
+        <div class="quest-name">${q.name}</div>
+        <div class="quest-jp">${q.jp}</div>
+        <div class="quest-target">${done?'✓ COMPLETE':cur+' / '+tgt}</div>
+        <div class="quest-reward">REWARD: +${q.reward}</div>
+        <div class="prog-wrap"><div class="prog-bar-bg"><div class="prog-bar" style="width:${Math.min(100,(cur/tgt)*100)}%"></div></div></div>
+      </div>`;
+    }).join('');
+  }
+
+  // Refresh counters
+  ['pu','su','sq'].forEach(refreshCount);
+}
+
+// ─── NAVIGATION ───────────────────────────────────────────
+function goSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(name==='social') renderFriends();
+}
+
+function socialTab(tab, btn) {
+  ['friends','lb','battle'].forEach(t=>{
+    document.getElementById('st-'+t).style.display = t===tab?'block':'none';
+  });
+  document.querySelectorAll('#sec-social .tab').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  if(tab==='lb') renderLeaderboard();
+  if(tab==='battle') renderBattle();
+}
+
+// ─── INIT ─────────────────────────────────────────────────
+async function init() {
+  try { await loadUser('guest').then(d=>{ if(d&&!d.username) Object.assign(S,d); }); } catch(e){}
+  checkDayReset();
+  if(!S.timerStart) S.timerStart=Date.now();
+  startTimer();
+  updateUI();
+}
+
+init();
+</script>
+</body>
+</html>
