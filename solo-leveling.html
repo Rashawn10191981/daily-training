@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#03050d"/>
+<title>Daily Training</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}
+html,body{min-height:100%;background:#03050d;color:#e2e8f0;font-family:monospace;overflow-x:hidden;}
+.orb{font-family:'Orbitron',monospace!important;}
+.noto{font-family:'Noto Sans JP',sans-serif!important;}
+
+@keyframes float{0%,100%{-webkit-transform:translateY(0);transform:translateY(0)}50%{-webkit-transform:translateY(-10px);transform:translateY(-10px)}}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+@keyframes rankPulse{0%,100%{text-shadow:0 0 20px var(--rc),0 0 40px var(--rc)}50%{text-shadow:0 0 60px var(--rc),0 0 120px var(--rc)}}
+@keyframes slideUp{from{opacity:0;-webkit-transform:translateY(20px);transform:translateY(20px)}to{opacity:1;-webkit-transform:translateY(0);transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes overlayOut{0%{opacity:0}10%{opacity:1}80%{opacity:1}100%{opacity:0}}
+@keyframes ping{0%{-webkit-transform:scale(1);transform:scale(1);opacity:0.9}100%{-webkit-transform:scale(2.5);transform:scale(2.5);opacity:0}}
+@keyframes borderFlow{0%,100%{border-color:rgba(100,116,139,0.3)}50%{border-color:var(--rc)}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 16px rgba(99,102,241,0.3)}50%{box-shadow:0 0 36px var(--rc)}}
+
+.tap{-webkit-transition:all 0.15s;transition:all 0.15s;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.tap:active{-webkit-transform:scale(0.94);transform:scale(0.94);filter:brightness(1.25);}
+.card{background:rgba(10,14,28,0.92);border-radius:10px;padding:16px 18px;position:relative;overflow:hidden;}
+.sbox{background:rgba(10,14,28,0.92);border-radius:10px;padding:14px 12px;text-align:center;}
+
+#overlay{position:fixed;inset:0;z-index:300;display:none;-webkit-box-align:center;align-items:center;-webkit-box-pack:center;justify-content:center;background:rgba(3,5,13,0.95);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);text-align:center;padding:32px;}
+
+.header{border-bottom:1px solid rgba(99,102,241,0.2);padding:12px 18px;background:rgba(3,5,13,0.9);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);position:sticky;top:0;z-index:40;display:-webkit-box;display:flex;-webkit-box-align:center;align-items:center;-webkit-box-pack:justify;justify-content:space-between;}
+
+.rnk{background:rgba(3,5,13,0.9);border:2px solid var(--rc);border-radius:8px;padding:6px 14px;text-align:center;}
+
+.nav{display:-webkit-box;display:flex;background:rgba(3,5,13,0.75);border-bottom:1px solid rgba(99,102,241,0.12);}
+.nb{-webkit-box-flex:1;flex:1;padding:10px 0;border:none;background:none;cursor:pointer;border-bottom:2px solid transparent;-webkit-transition:all 0.2s;transition:all 0.2s;}
+.nb.act{border-bottom-color:var(--rc);}
+
+.scr{padding:16px;max-width:500px;margin:0 auto;display:none;}
+.scr.act{display:block;animation:slideUp 0.3s ease;}
+
+#map-wrap{height:220px;background:rgba(10,14,28,0.92);border-radius:12px;overflow:hidden;position:relative;margin-bottom:14px;}
+#route-svg{width:100%;height:100%;}
+</style>
+</head>
+<body>
+<div id="app" style="min-height:100vh;position:relative;">
+
+<div id="bgA" style="position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;transition:background 1s;"></div>
+<div style="position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;background-image:linear-gradient(rgba(99,102,241,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(99,102,241,0.06) 1px,transparent 1px);background-size:44px 44px;"></div>
+<div id="scanEl" style="position:fixed;left:0;right:0;height:2px;pointer-events:none;z-index:60;animation:scan 8s linear infinite;"></div>
+<div id="ptcls" style="position:fixed;top:0;left:0;right:0;bottom:0;pointer-events:none;overflow:hidden;"></div>
+
+<!-- OVERLAY -->
+<div id="overlay">
+  <div>
+    <div class="orb" id="oTag" style="font-size:8px;letter-spacing:8px;margin-bottom:24px;color:var(--rc);">◆ SYSTEM MESSAGE ◆</div>
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:28px;">
+      <div id="oLl" style="flex:1;height:1px;"></div>
+      <span id="oIco" style="font-size:40px;">⚔️</span>
+      <div id="oLr" style="flex:1;height:1px;"></div>
+    </div>
+    <div class="orb" id="oTitle" style="font-size:28px;font-weight:900;letter-spacing:4px;color:#fff;margin-bottom:10px;"></div>
+    <div class="orb" id="oSub" style="font-size:10px;letter-spacing:4px;margin-bottom:28px;color:var(--rc);"></div>
+    <div style="display:inline-block;border:1px solid var(--rc);padding:10px 32px;border-radius:6px;">
+      <span class="orb" id="oStrk" style="font-size:13px;letter-spacing:4px;color:var(--rc);"></span>
+    </div>
+    <div class="noto" id="oKan" style="margin-top:20px;font-size:10px;color:#1e293b;letter-spacing:3px;"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="orb" style="font-size:7px;letter-spacing:6px;color:#6366f1;margin-bottom:3px;">◆ SYSTEM QUEST ◆</div>
+    <div class="orb" style="font-size:15px;font-weight:900;letter-spacing:3px;color:#fff;line-height:1;">DAILY TRAINING</div>
+    <div class="noto" style="font-size:8px;color:#1e293b;letter-spacing:2px;margin-top:2px;">毎日のトレーニング</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="text-align:right;">
+      <div class="orb" id="hStrk" style="font-size:9px;letter-spacing:2px;color:var(--rc);">🔥 0</div>
+      <div class="noto" style="font-size:7px;color:#374151;">streak</div>
+    </div>
+    <div class="rnk">
+      <div class="orb" style="font-size:7px;letter-spacing:4px;color:var(--rc);margin-bottom:1px;">RANK</div>
+      <div class="orb" id="hRnk" style="font-size:26px;font-weight:900;color:var(--rc);line-height:1;animation:rankPulse 2s ease infinite;">E</div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nb act" id="nb-home" onclick="go('home')">
+    <div class="orb" style="font-size:8px;letter-spacing:2px;">🏠 HOME</div>
+    <div class="noto" style="font-size:7px;color:#1e293b;">ホーム</div>
+  </button>
+  <button class="nb" id="nb-workout" onclick="go('workout')">
+    <div class="orb" style="font-size:8px;letter-spacing:2px;color:#374151;">💪 TRAIN</div>
+    <div class="noto" style="font-size:7px;color:#1e293b;">トレーニング</div>
+  </button>
+  <button class="nb" id="nb-run" onclick="go('run')">
+    <div class="orb" style="font-size:8px;letter-spacing:2px;color:#374151;">🏃 RUN</div>
+    <div class="noto" style="font-size:7px;color:#1e293b;">ランニング</div>
+  </button>
+  <button class="nb" id="nb-stats" onclick="go('stats')">
+    <div class="orb" style="font-size:8px;letter-spacing:2px;color:#374151;">📊 STATUS</div>
+    <div class="noto" style="font-size:7px;color:#1e293b;">ステータス</div>
+  </button>
+</div>
+
+<div id="s-home"    class="scr act"></div>
+<div id="s-workout" class="scr"></div>
+<div id="s-run"     class="scr"></div>
+<div id="s-stats"   class="scr"></div>
+
+</div><!-- end app -->
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────────
+var RANKS = ["E","D","C","B","A","S"];
+var RC    = {E:"#64748b",D:"#10b981",C:"#38bdf8",B:"#a855f7",A:"#f97316",S:"#eab308"};
+var RN    = {E:"Iron",D:"Bronze",C:"Silver",B:"Gold",A:"Platinum",S:"Shadow Monarch"};
+var RT    = [0,7,15,25,40,60];
+var BWO   = [
+  {id:"pushups",name:"Push-Ups",kanji:"腕立て伏せ",base:100,unit:"reps",icon:"💪",rest:60},
+  {id:"situps", name:"Sit-Ups", kanji:"腹筋",      base:100,unit:"reps",icon:"⚡",rest:60},
+  {id:"squats", name:"Squats",  kanji:"スクワット",base:100,unit:"reps",icon:"🔥",rest:60}
+];
+var RUN_BASE = 6.2;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+var S = {
+  streak:    parseInt(localStorage.getItem("sl_streak") || "0"),
+  doneToday: localStorage.getItem("sl_date") === new Date().toDateString(),
+  woDone:    [],
+  curEx:     0,
+  reps:      0,
+  restMode:  false,
+  restTimer: 0,
+  runCoords: [],
+  runTime:   0,
+  runDist:   0,
+  runActive: false,
+  runDone:   false,
+  runSummary:null,
+  gpsErr:    null,
+  cur:       "home"
+};
+var restIv = null;
+var runIv  = null;
+var wid    = null;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function getRank() {
+  var r = "E";
+  for (var i = 0; i < RANKS.length; i++) {
+    if (S.streak >= RT[i]) r = RANKS[i];
+  }
+  return r;
+}
+function getRankIdx() { return RANKS.indexOf(getRank()); }
+function getRankPct() {
+  var i = getRankIdx();
+  if (i === 5) return 100;
+  return Math.round(((S.streak - RT[i]) / (RT[i+1] - RT[i])) * 100);
+}
+function getColor() { return RC[getRank()]; }
+function getWorkout() {
+  var ri   = getRankIdx();
+  var mult = (1 + Math.floor(S.streak / 7) * 0.1) * (1 + ri * 0.15);
+  var out  = [];
+  for (var i = 0; i < BWO.length; i++) {
+    var ex = BWO[i];
+    out.push({
+      id:    ex.id,
+      name:  ex.name,
+      kanji: ex.kanji,
+      base:  ex.base,
+      unit:  ex.unit,
+      icon:  ex.icon,
+      rest:  ex.rest,
+      target: Math.round(ex.base * mult)
+    });
+  }
+  return out;
+}
+function getRunTarget() {
+  var ri   = getRankIdx();
+  var mult = (1 + Math.floor(S.streak / 7) * 0.1) * (1 + ri * 0.15);
+  return parseFloat((RUN_BASE * mult).toFixed(2));
+}
+function fmtTime(sec) {
+  var m = Math.floor(sec / 60);
+  var s = sec % 60;
+  return (m < 10 ? "0" : "") + m + ":" + (s < 10 ? "0" : "") + s;
+}
+function calcDist(coords) {
+  if (coords.length < 2) return 0;
+  var d = 0;
+  for (var i = 1; i < coords.length; i++) {
+    var la1 = coords[i-1][0], lo1 = coords[i-1][1];
+    var la2 = coords[i][0],   lo2 = coords[i][1];
+    var R    = 3958.8;
+    var dlat = (la2 - la1) * Math.PI / 180;
+    var dlon = (lo2 - lo1) * Math.PI / 180;
+    var a    = Math.sin(dlat/2) * Math.sin(dlat/2) +
+               Math.cos(la1 * Math.PI / 180) * Math.cos(la2 * Math.PI / 180) *
+               Math.sin(dlon/2) * Math.sin(dlon/2);
+    d += R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  return d;
+}
+function calcPace(mi, sec) {
+  if (mi < 0.01) return "--:--";
+  var p = sec / 60 / mi;
+  var m = Math.floor(p);
+  var s = Math.round((p - m) * 60);
+  return m + ":" + (s < 10 ? "0" : "") + s;
+}
+function save() {
+  localStorage.setItem("sl_streak", S.streak);
+  if (S.doneToday) localStorage.setItem("sl_date", new Date().toDateString());
+}
+function el(id) { return document.getElementById(id); }
+function html(id, h) { el(id).innerHTML = h; }
+
+// ── Theme ─────────────────────────────────────────────────────────────────────
+function applyTheme() {
+  var c = getColor();
+  document.documentElement.style.setProperty("--rc", c);
+  document.documentElement.style.setProperty("--rc-40", c + "40");
+  el("bgA").style.background =
+    "radial-gradient(ellipse 100% 55% at 50% -5%," + c + "16 0%,transparent 65%)";
+  el("scanEl").style.background =
+    "linear-gradient(90deg,transparent," + c + "18,transparent)";
+  el("hRnk").textContent  = getRank();
+  el("hStrk").textContent = "🔥 " + S.streak;
+  el("hStrk").style.color = c;
+  var screens = ["home","workout","run","stats"];
+  for (var i = 0; i < screens.length; i++) {
+    var id  = screens[i];
+    var btn = el("nb-" + id);
+    var div = btn.querySelector(".orb");
+    if (S.cur === id) {
+      div.style.color = c;
+      btn.classList.add("act");
+    } else {
+      div.style.color = "#374151";
+      btn.classList.remove("act");
+    }
+  }
+}
+
+// ── Particles ─────────────────────────────────────────────────────────────────
+function spawnParticles() {
+  var wrap = el("ptcls");
+  wrap.innerHTML = "";
+  var c = getColor();
+  for (var i = 0; i < 18; i++) {
+    var d   = document.createElement("div");
+    var sz  = 1 + Math.random() * 2.5;
+    var dur = (3 + Math.random() * 4).toFixed(1);
+    var del = (Math.random() * 5).toFixed(1);
+    d.style.cssText =
+      "position:absolute;width:" + sz + "px;height:" + sz + "px;" +
+      "background:" + c + ";border-radius:50%;" +
+      "left:" + (Math.random()*100).toFixed(1) + "%;" +
+      "top:"  + (Math.random()*100).toFixed(1) + "%;" +
+      "opacity:" + (0.08 + Math.random()*0.35).toFixed(2) + ";" +
+      "box-shadow:0 0 6px " + c + ";" +
+      "animation:float " + dur + "s ease-in-out infinite;" +
+      "animation-delay:" + del + "s;";
+    wrap.appendChild(d);
+  }
+}
+
+// ── Overlay ───────────────────────────────────────────────────────────────────
+function showOverlay(title, sub, kan, ico) {
+  var c = getColor();
+  el("oLl").style.background = "linear-gradient(90deg,transparent," + c + ")";
+  el("oLr").style.background = "linear-gradient(90deg," + c + ",transparent)";
+  el("oTitle").style.textShadow = "0 0 20px " + c + ",0 0 60px " + c;
+  el("oIco").textContent   = ico;
+  el("oTitle").textContent = title;
+  el("oSub").textContent   = sub;
+  el("oStrk").textContent  = "STREAK: " + S.streak + " DAYS";
+  el("oKan").textContent   = kan;
+  var ov = el("overlay");
+  ov.style.display    = "flex";
+  ov.style.animation  = "overlayOut 4s ease forwards";
+  setTimeout(function() {
+    ov.style.display   = "none";
+    ov.style.animation = "";
+  }, 4000);
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────────
+function go(name) {
+  S.cur = name;
+  var screens = ["home","workout","run","stats"];
+  for (var i = 0; i < screens.length; i++) {
+    var sid = screens[i];
+    var sel = el("s-" + sid);
+    if (sid === name) {
+      sel.style.display = "block";
+      sel.className = "scr act";
+    } else {
+      sel.style.display = "none";
+      sel.className = "scr";
+    }
+  }
+  applyTheme();
+  if (name === "home")    renderHome();
+  if (name === "workout") renderWorkout();
+  if (name === "run")     renderRun();
+  if (name === "stats")   renderStats();
+}
+
+// ── Quest complete check ──────────────────────────────────────────────────────
+function checkComplete() {
+  var workout = getWorkout();
+  if (S.woDone.length === workout.length && S.runDone && !S.doneToday) {
+    S.streak++;
+    S.doneToday = true;
+    save();
+    showOverlay("QUEST COMPLETE", "DAILY QUEST FINISHED", "クエスト完了", "⚔️");
+    applyTheme();
+    spawnParticles();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// HOME
+// ─────────────────────────────────────────────────────────────────────────────
+function renderHome() {
+  var c       = getColor();
+  var workout = getWorkout();
+  var runTgt  = getRunTarget();
+  var allWo   = S.woDone.length === workout.length;
+
+  var woRows = "";
+  for (var i = 0; i < workout.length; i++) {
+    var ex   = workout[i];
+    var done = S.woDone.indexOf(ex.id) >= 0;
+    woRows +=
+      "<div style='display:flex;gap:10px;margin-bottom:5px;align-items:center;'>" +
+        "<span style='font-size:14px;'>" + ex.icon + "</span>" +
+        "<span class='orb' style='font-size:10px;color:#64748b;flex:1;'>" + ex.name + "</span>" +
+        "<span class='orb' style='font-size:10px;color:" + (done ? "#10b981" : c) + ";'>" +
+          ex.target + " reps " + (done ? "✓" : "") +
+        "</span>" +
+      "</div>";
+  }
+
+  var startWoBtn = "";
+  if (!allWo && !S.doneToday) {
+    startWoBtn =
+      "<button class='tap' onclick='go(\"workout\")' style='margin-top:14px;width:100%;padding:10px;" +
+      "background:linear-gradient(135deg,#4338ca," + c + "66);border:1px solid " + c + ";" +
+      "border-radius:8px;box-shadow:0 0 20px " + c + "30;'>" +
+        "<span class='orb' style='font-size:10px;letter-spacing:4px;color:#fff;'>START TRAINING</span>" +
+      "</button>";
+  }
+
+  var runSummaryHtml = "";
+  if (S.runSummary) {
+    runSummaryHtml =
+      "<div style='text-align:right;'>" +
+        "<div class='orb' style='font-size:13px;color:#10b981;'>" + S.runSummary.dist.toFixed(2) + " mi</div>" +
+        "<div class='orb' style='font-size:11px;color:#4b5563;'>" + fmtTime(S.runSummary.time) + "</div>" +
+        "<div class='orb' style='font-size:10px;color:#4b5563;'>" + S.runSummary.pace + "/mi</div>" +
+      "</div>";
+  }
+
+  var startRunBtn = "";
+  if (!S.runDone && !S.doneToday) {
+    startRunBtn =
+      "<button class='tap' onclick='go(\"run\")' style='margin-top:14px;width:100%;padding:10px;" +
+      "background:linear-gradient(135deg,#4338ca," + c + "66);border:1px solid " + c + ";" +
+      "border-radius:8px;box-shadow:0 0 20px " + c + "30;'>" +
+        "<span class='orb' style='font-size:10px;letter-spacing:4px;color:#fff;'>START RUN</span>" +
+      "</button>";
+  }
+
+  html("s-home",
+    "<div>" +
+    // Status banner
+    "<div style='background:" + (S.doneToday?"rgba(16,185,129,0.06)":"rgba(239,68,68,0.06)") + ";" +
+      "border:1px solid " + (S.doneToday?"#10b98145":"#ef444445") + ";" +
+      "border-radius:10px;padding:14px 18px;margin-bottom:16px;'>" +
+      "<div class='orb' style='font-size:8px;letter-spacing:5px;color:" + (S.doneToday?"#10b981":"#f87171") + ";margin-bottom:6px;'>" +
+        (S.doneToday ? "◆ DAILY QUEST COMPLETE ◆" : "◆ DAILY QUEST ACTIVE ◆") +
+      "</div>" +
+      "<div class='noto' style='font-size:11px;color:#94a3b8;'>" +
+        (S.doneToday ? "You have proven your worth today, Hunter." : "The System has issued your daily training.") +
+      "</div>" +
+    "</div>" +
+    // Workout card
+    "<div class='card' style='border:1px solid " + (allWo?"#10b98155":c+"22") + ";margin-bottom:12px;'>" +
+      (allWo ? "<div style='position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,#10b981,transparent);'></div>" : "") +
+      "<div class='orb' style='font-size:9px;letter-spacing:4px;color:" + (allWo?"#10b981":c) + ";margin-bottom:10px;'>" +
+        (allWo ? "✓ WORKOUT COMPLETE" : "⚔  STRENGTH TRAINING") +
+      "</div>" +
+      woRows + startWoBtn +
+    "</div>" +
+    // Run card
+    "<div class='card' style='border:1px solid " + (S.runDone?"#10b98155":c+"22") + ";margin-bottom:16px;'>" +
+      (S.runDone ? "<div style='position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,#10b981,transparent);'></div>" : "") +
+      "<div class='orb' style='font-size:9px;letter-spacing:4px;color:" + (S.runDone?"#10b981":c) + ";margin-bottom:10px;'>" +
+        (S.runDone ? "✓ RUN COMPLETE" : "🏃 DAILY RUN") +
+      "</div>" +
+      "<div style='display:flex;justify-content:space-between;align-items:flex-end;'>" +
+        "<div>" +
+          "<div class='orb' style='font-size:30px;font-weight:900;color:" + (S.runDone?"#10b981":c) + ";text-shadow:0 0 16px " + (S.runDone?"#10b981":c) + ";'>" + runTgt + "</div>" +
+          "<div class='orb' style='font-size:9px;color:#4b5563;letter-spacing:2px;'>MILES TARGET</div>" +
+        "</div>" +
+        runSummaryHtml +
+      "</div>" +
+      startRunBtn +
+    "</div>" +
+    // Reset
+    "<button class='tap' onclick='resetDemo()' style='width:100%;padding:8px;background:transparent;" +
+      "border:1px solid " + c + "15;border-radius:6px;color:#374151;font-size:7px;letter-spacing:3px;" +
+      "font-family:Orbitron,monospace;'>◆ RESET DEMO ◆</button>" +
+    "</div>"
+  );
+}
+
+function resetDemo() {
+  if (S.runActive) stopRun(false);
+  S.streak = 0; S.doneToday = false; S.woDone = [];
+  S.curEx = 0; S.reps = 0; S.restMode = false; S.restTimer = 0;
+  S.runCoords = []; S.runTime = 0; S.runDist = 0;
+  S.runActive = false; S.runDone = false; S.runSummary = null; S.gpsErr = null;
+  localStorage.removeItem("sl_date");
+  localStorage.setItem("sl_streak","0");
+  applyTheme(); spawnParticles(); go("home");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKOUT
+// ─────────────────────────────────────────────────────────────────────────────
+function renderWorkout() {
+  var c       = getColor();
+  var workout = getWorkout();
+
+  if (S.woDone.length === workout.length) {
+    var rows = "";
+    for (var i = 0; i < workout.length; i++) {
+      var ex = workout[i];
+      rows +=
+        "<div style='display:flex;justify-content:space-between;padding:10px 16px;" +
+        "background:rgba(16,185,129,0.06);border:1px solid #10b98130;border-radius:8px;margin-bottom:8px;'>" +
+          "<span class='orb' style='font-size:10px;color:#10b981;'>" + ex.icon + " " + ex.name + "</span>" +
+          "<span class='orb' style='font-size:10px;color:#10b981;'>✓ " + ex.target + " reps</span>" +
+        "</div>";
+    }
+    html("s-workout",
+      "<div style='text-align:center;padding:40px 20px;'>" +
+        "<div style='font-size:60px;margin-bottom:16px;'>⚔️</div>" +
+        "<div class='orb' style='font-size:20px;font-weight:900;color:" + c + ";letter-spacing:5px;" +
+          "text-shadow:0 0 30px " + c + ";'>WORKOUT COMPLETE</div>" +
+        "<div class='noto' style='font-size:11px;color:#4b5563;margin-top:8px;letter-spacing:2px;'>トレーニング完了</div>" +
+        "<div style='margin-top:24px;'>" + rows + "</div>" +
+        "<button class='tap' onclick='go(\"home\")' style='margin-top:20px;padding:12px 32px;" +
+          "background:linear-gradient(135deg,#4338ca," + c + "66);border:1px solid " + c + ";border-radius:8px;'>" +
+          "<span class='orb' style='font-size:10px;letter-spacing:4px;color:#fff;'>BACK TO HOME</span>" +
+        "</button>" +
+      "</div>"
+    );
+    return;
+  }
+
+  if (S.restMode) {
+    renderRest();
+    return;
+  }
+
+  var ex   = workout[S.curEx];
+  var pct  = Math.min((S.reps / ex.target) * 100, 100);
+  var circ = 2 * Math.PI * 88;
+  var off  = circ * (1 - pct / 100);
+
+  var strips = "";
+  for (var i = 0; i < workout.length; i++) {
+    var w    = workout[i];
+    var isDone = S.woDone.indexOf(w.id) >= 0;
+    var bg   = isDone ? "#10b981" : (i === S.curEx ? c : c + "20");
+    var glow = i === S.curEx ? "0 0 8px " + c : "none";
+    strips +=
+      "<div style='flex:1;height:3px;border-radius:2px;" +
+        "background:" + bg + ";box-shadow:" + glow + ";transition:all 0.4s;'></div>";
+  }
+
+  html("s-workout",
+    "<div>" +
+    "<div style='display:flex;gap:6px;margin-bottom:20px;'>" + strips + "</div>" +
+    "<div style='text-align:center;margin-bottom:20px;'>" +
+      "<div class='noto' style='font-size:26px;color:" + c + "20;letter-spacing:4px;'>" + ex.kanji + "</div>" +
+      "<div style='font-size:48px;margin:6px 0;'>" + ex.icon + "</div>" +
+      "<div class='orb' style='font-size:20px;font-weight:900;letter-spacing:4px;color:#fff;margin-bottom:4px;'>" + ex.name.toUpperCase() + "</div>" +
+      "<div class='orb' style='font-size:9px;letter-spacing:3px;color:#4b5563;'>EXERCISE " + (S.curEx+1) + " OF " + workout.length + "</div>" +
+    "</div>" +
+    "<div style='text-align:center;margin-bottom:20px;'>" +
+      "<svg viewBox='0 0 200 200' width='200' height='200' style='display:block;margin:0 auto;'>" +
+        "<defs><filter id='fg'><feGaussianBlur stdDeviation='3' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter></defs>" +
+        "<circle cx='100' cy='100' r='88' fill='none' stroke='" + c + "18' stroke-width='10'/>" +
+        "<circle cx='100' cy='100' r='88' fill='none' stroke='" + c + "' stroke-width='10' stroke-linecap='round'" +
+          " stroke-dasharray='" + circ.toFixed(2) + "' stroke-dashoffset='" + off.toFixed(2) + "'" +
+          " transform='rotate(-90 100 100)' style='transition:stroke-dashoffset 0.3s ease;filter:drop-shadow(0 0 8px " + c + ");'/>" +
+        "<text x='100' y='88' text-anchor='middle' style='font-family:Orbitron,monospace;font-size:46px;font-weight:900;fill:#fff;'>" + S.reps + "</text>" +
+        "<text x='100' y='114' text-anchor='middle' style='font-family:Orbitron,monospace;font-size:14px;fill:" + c + ";'>/ " + ex.target + "</text>" +
+        "<text x='100' y='136' text-anchor='middle' style='font-family:Noto Sans JP,sans-serif;font-size:10px;fill:#374151;'>reps</text>" +
+      "</svg>" +
+    "</div>" +
+    "<button class='tap' onclick='addRep()' style='width:100%;padding:22px;margin-bottom:12px;" +
+      "background:linear-gradient(135deg,#1e1b4b,#312e81," + c + "44);" +
+      "border:2px solid " + c + ";border-radius:14px;position:relative;overflow:hidden;animation:glowPulse 2s ease infinite;'>" +
+      "<div class='orb' style='font-size:18px;font-weight:900;letter-spacing:6px;color:#fff;pointer-events:none;'>TAP TO REP</div>" +
+      "<div class='noto' style='font-size:9px;color:" + c + ";margin-top:4px;letter-spacing:3px;pointer-events:none;'>タップしてレップ</div>" +
+    "</button>" +
+    "<button class='tap' onclick='undoRep()' style='width:100%;padding:10px;background:transparent;border:1px solid " + c + "20;border-radius:8px;'>" +
+      "<span class='orb' style='font-size:9px;letter-spacing:3px;color:#374151;'>↩ UNDO REP</span>" +
+    "</button>" +
+    "</div>"
+  );
+}
+
+function renderRest() {
+  var c       = getColor();
+  var workout = getWorkout();
+  var ex      = workout[S.curEx];
+  html("s-workout",
+    "<div style='text-align:center;padding:30px 20px;animation:fadeIn 0.3s ease;'>" +
+      "<div class='orb' style='font-size:8px;letter-spacing:6px;color:" + c + ";margin-bottom:16px;'>◆ REST PERIOD ◆</div>" +
+      "<div class='noto' style='font-size:10px;color:#4b5563;margin-bottom:20px;letter-spacing:2px;'>休憩時間</div>" +
+      "<div class='orb' id='restD' style='font-size:72px;font-weight:900;color:" + c + ";text-shadow:0 0 40px " + c + ";line-height:1;margin-bottom:8px;animation:rankPulse 1s ease infinite;'>" + fmtTime(S.restTimer) + "</div>" +
+      "<div class='orb' style='font-size:9px;color:#374151;letter-spacing:3px;margin-bottom:20px;'>NEXT: " + ex.name.toUpperCase() + "</div>" +
+      "<div style='height:6px;background:" + c + "15;border-radius:3px;overflow:hidden;margin:0 0 24px;'>" +
+        "<div id='restB' style='height:100%;background:linear-gradient(90deg,#4338ca," + c + ");border-radius:3px;transition:width 1s linear;width:100%;'></div>" +
+      "</div>" +
+      "<button class='tap' onclick='skipRest()' style='padding:12px 32px;background:rgba(10,14,28,0.9);border:1px solid " + c + "40;border-radius:8px;'>" +
+        "<span class='orb' style='font-size:10px;letter-spacing:4px;color:" + c + ";'>SKIP REST →</span>" +
+      "</button>" +
+    "</div>"
+  );
+}
+
+function addRep() {
+  var workout = getWorkout();
+  var ex      = workout[S.curEx];
+  S.reps++;
+  if (S.reps >= ex.target) {
+    S.woDone.push(ex.id);
+    if (S.curEx < workout.length - 1) {
+      var prevRest = ex.rest;
+      S.restMode  = true;
+      S.restTimer = prevRest;
+      S.curEx++;
+      S.reps = 0;
+      startRestTimer(prevRest);
+    } else {
+      showOverlay("WORKOUT COMPLETE","TRAINING FINISHED","トレーニング完了","⚔️");
+      checkComplete();
+    }
+  }
+  renderWorkout();
+}
+
+function undoRep() {
+  if (S.reps > 0) { S.reps--; renderWorkout(); }
+}
+
+function startRestTimer(total) {
+  clearInterval(restIv);
+  restIv = setInterval(function() {
+    S.restTimer--;
+    var d = el("restD");
+    var b = el("restB");
+    if (d) d.textContent = fmtTime(S.restTimer);
+    if (b) b.style.width = (S.restTimer / total * 100) + "%";
+    if (S.restTimer <= 0) {
+      clearInterval(restIv);
+      S.restMode = false;
+      renderWorkout();
+    }
+  }, 1000);
+}
+
+function skipRest() {
+  clearInterval(restIv);
+  S.restMode  = false;
+  S.restTimer = 0;
+  renderWorkout();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RUN
+// ─────────────────────────────────────────────────────────────────────────────
+function buildMapSVG(c) {
+  var cs = S.runCoords;
+  if (cs.length === 0) {
+    var pulse = S.runActive
+      ? "<animate attributeName='r' values='5;14;5' dur='2s' repeatCount='indefinite'/>" +
+        "<animate attributeName='opacity' values='0.9;0;0.9' dur='2s' repeatCount='indefinite'/>"
+      : "";
+    return "<text x='150' y='100' text-anchor='middle' style='font-family:Orbitron,monospace;font-size:10px;fill:#1e293b;letter-spacing:3px;'>AWAITING GPS</text>" +
+           "<text x='150' y='118' text-anchor='middle' style='font-family:Noto Sans JP,sans-serif;font-size:9px;fill:#1e293b;'>GPS信号待機中</text>" +
+           "<circle cx='150' cy='150' r='5' fill='" + c + "' opacity='" + (S.runActive?1:0.3) + "'>" + pulse + "</circle>";
+  }
+  var las = [], los = [];
+  for (var i = 0; i < cs.length; i++) { las.push(cs[i][0]); los.push(cs[i][1]); }
+  var mla = Math.min.apply(null, las), xla = Math.max.apply(null, las);
+  var mlo = Math.min.apply(null, los), xlo = Math.max.apply(null, los);
+  var pad = 0.12;
+  var laR = Math.max(xla - mla, 0.001);
+  var loR = Math.max(xlo - mlo, 0.001);
+  function tx(lo) { return ((lo - mlo) / loR) * (1 - 2*pad) * 300 + pad * 300; }
+  function ty(la) { return (1 - ((la - mla) / laR) * (1 - 2*pad) - pad) * 220; }
+  var pts = "";
+  for (var i = 0; i < cs.length; i++) {
+    pts += (i ? " " : "") + tx(cs[i][1]).toFixed(1) + "," + ty(cs[i][0]).toFixed(1);
+  }
+  var cur = cs[cs.length - 1];
+  var cx  = tx(cur[1]).toFixed(1);
+  var cy  = ty(cur[0]).toFixed(1);
+  var grid = "";
+  var fracs = [0.25, 0.5, 0.75];
+  for (var i = 0; i < fracs.length; i++) {
+    var f = fracs[i];
+    grid += "<line x1='" + (f*300) + "' y1='0' x2='" + (f*300) + "' y2='220' stroke='" + c + "10' stroke-width='0.5'/>" +
+            "<line x1='0' y1='" + (f*220) + "' x2='300' y2='" + (f*220) + "' stroke='" + c + "10' stroke-width='0.5'/>";
+  }
+  var pingAnim = S.runActive
+    ? "<circle cx='" + cx + "' cy='" + cy + "' r='11' fill='none' stroke='" + c + "' stroke-width='0.5' opacity='0.3'>" +
+      "<animate attributeName='r' values='10;22;10' dur='2s' repeatCount='indefinite'/>" +
+      "<animate attributeName='opacity' values='0.3;0;0.3' dur='2s' repeatCount='indefinite'/></circle>"
+    : "";
+  return grid +
+    "<polyline points='" + pts + "' fill='none' stroke='" + c + "' stroke-width='6' stroke-opacity='0.08' stroke-linecap='round' stroke-linejoin='round'/>" +
+    "<polyline points='" + pts + "' fill='none' stroke='url(#rg)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' filter='url(#fg)'/>" +
+    "<circle cx='" + tx(cs[0][1]).toFixed(1) + "' cy='" + ty(cs[0][0]).toFixed(1) + "' r='5' fill='#10b981' opacity='0.9'/>" +
+    "<circle cx='" + tx(cs[0][1]).toFixed(1) + "' cy='" + ty(cs[0][0]).toFixed(1) + "' r='9' fill='none' stroke='#10b981' stroke-width='1' opacity='0.4'/>" +
+    "<circle cx='" + cx + "' cy='" + cy + "' r='6' fill='" + c + "' filter='url(#fg)'/>" +
+    "<circle cx='" + cx + "' cy='" + cy + "' r='11' fill='none' stroke='" + c + "' stroke-width='1.5' opacity='0.5'/>" +
+    pingAnim;
+}
+
+function renderRun() {
+  var c      = getColor();
+  var runTgt = getRunTarget();
+  var dpct   = Math.min(100, (S.runDist / runTgt) * 100);
+
+  var statItems = [
+    {l:"DISTANCE", v:S.runDist.toFixed(2), u:"mi",  i:"📍"},
+    {l:"TIME",     v:fmtTime(S.runTime),   u:"",    i:"⏱"},
+    {l:"PACE",     v:calcPace(S.runDist, S.runTime), u:"/mi", i:"⚡"}
+  ];
+  var statHtml = "";
+  for (var i = 0; i < statItems.length; i++) {
+    var s = statItems[i];
+    statHtml +=
+      "<div class='sbox' style='border:1px solid " + c + "20;'>" +
+        "<div style='font-size:16px;margin-bottom:4px;'>" + s.i + "</div>" +
+        "<div class='orb' style='font-size:15px;font-weight:900;color:" + c + ";text-shadow:0 0 10px " + c + ";'>" + s.v + "</div>" +
+        "<div style='font-size:8px;color:#4b5563;'>" + s.u + "</div>" +
+        "<div class='orb' style='font-size:6px;letter-spacing:3px;color:#374151;margin-top:4px;'>" + s.l + "</div>" +
+      "</div>";
+  }
+
+  var gpsHtml = "";
+  if (S.gpsErr) {
+    gpsHtml =
+      "<div style='background:rgba(239,68,68,0.08);border:1px solid #ef444440;border-radius:8px;padding:10px 14px;margin-bottom:12px;'>" +
+        "<div class='orb' style='font-size:8px;letter-spacing:3px;color:#f87171;margin-bottom:4px;'>⚠ GPS ERROR</div>" +
+        "<div class='noto' style='font-size:9px;color:#6b7280;'>" + S.gpsErr + "</div>" +
+        "<div class='noto' style='font-size:9px;color:#4b5563;margin-top:6px;'>Open this HTML file directly in Safari — not inside another app.</div>" +
+      "</div>";
+  }
+
+  var controlHtml = "";
+  if (S.runDone) {
+    var sumItems = [
+      {l:"DISTANCE",  v:S.runSummary.dist.toFixed(2) + " mi"},
+      {l:"TIME",      v:fmtTime(S.runSummary.time)},
+      {l:"AVG PACE",  v:S.runSummary.pace + " /mi"},
+      {l:"TARGET",    v:runTgt + " mi"}
+    ];
+    var sumHtml = "";
+    for (var i = 0; i < sumItems.length; i++) {
+      var s = sumItems[i];
+      sumHtml +=
+        "<div style='text-align:center;padding:10px;background:rgba(16,185,129,0.05);border-radius:8px;border:1px solid #10b98120;'>" +
+          "<div class='orb' style='font-size:14px;font-weight:900;color:#10b981;'>" + s.v + "</div>" +
+          "<div class='orb' style='font-size:7px;color:#374151;letter-spacing:2px;margin-top:4px;'>" + s.l + "</div>" +
+        "</div>";
+    }
+    controlHtml =
+      "<div style='background:rgba(16,185,129,0.06);border:1px solid #10b98140;border-radius:12px;padding:20px;'>" +
+        "<div class='orb' style='font-size:10px;letter-spacing:5px;color:#10b981;margin-bottom:16px;text-align:center;'>◆ RUN COMPLETE ◆</div>" +
+        "<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;'>" + sumHtml + "</div>" +
+        "<button class='tap' onclick='go(\"home\")' style='margin-top:14px;width:100%;padding:12px;background:linear-gradient(135deg,#4338ca," + c + "66);border:1px solid " + c + ";border-radius:8px;'>" +
+          "<span class='orb' style='font-size:10px;letter-spacing:4px;color:#fff;'>BACK TO HOME</span>" +
+        "</button>" +
+      "</div>";
+  } else if (S.runActive) {
+    controlHtml =
+      "<button class='tap' onclick='stopRun(false)' style='width:100%;padding:16px;background:rgba(239,68,68,0.1);border:1px solid #ef444460;border-radius:10px;'>" +
+        "<div class='orb' style='font-size:13px;letter-spacing:5px;font-weight:900;color:#f87171;'>■ END RUN</div>" +
+        "<div class='noto' style='font-size:8px;color:#6b7280;margin-top:4px;letter-spacing:2px;'>ランニング終了</div>" +
+      "</button>";
+  } else {
+    controlHtml =
+      "<button class='tap' onclick='startRun()' style='width:100%;padding:16px;background:linear-gradient(135deg,#4338ca," + c + "66);border:1px solid " + c + ";border-radius:10px;box-shadow:0 0 30px " + c + "35;'>" +
+        "<div class='orb' style='font-size:13px;letter-spacing:5px;font-weight:900;color:#fff;'>▶ START RUN</div>" +
+        "<div class='noto' style='font-size:8px;color:" + c + ";margin-top:4px;letter-spacing:2px;'>ランニング開始</div>" +
+      "</button>";
+  }
+
+  html("s-run",
+    "<div>" +
+    // Map
+    "<div id='map-wrap' style='border:1px solid " + c + "30;'>" +
+      "<svg id='route-svg' viewBox='0 0 300 220' preserveAspectRatio='xMidYMid meet'>" +
+        "<defs>" +
+          "<filter id='fg'><feGaussianBlur stdDeviation='2.5' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter>" +
+          "<linearGradient id='rg' x1='0%' y1='0%' x2='100%' y2='0%'>" +
+            "<stop offset='0%' stop-color='#4f46e5' stop-opacity='0.7'/>" +
+            "<stop offset='100%' stop-color='" + c + "' stop-opacity='1'/>" +
+          "</linearGradient>" +
+        "</defs>" +
+        buildMapSVG(c) +
+      "</svg>" +
+      "<div style='position:absolute;top:10px;left:12px;'>" +
+        "<div class='orb' style='font-size:7px;letter-spacing:4px;color:" + c + ";background:rgba(3,5,13,0.85);padding:3px 8px;border-radius:4px;border:1px solid " + c + "30;'>" +
+          (S.runActive ? "● LIVE TRACKING" : S.runDone ? "◆ ROUTE SAVED" : "◆ GPS READY") +
+        "</div>" +
+      "</div>" +
+      (S.runActive ? "<div style='position:absolute;top:12px;right:12px;width:8px;height:8px;border-radius:50%;background:#ef4444;animation:ping 1s ease infinite;'></div>" : "") +
+    "</div>" +
+    gpsHtml +
+    "<div style='display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;'>" + statHtml + "</div>" +
+    // Progress bar
+    "<div class='card' style='border:1px solid " + c + "20;margin-bottom:14px;'>" +
+      "<div style='display:flex;justify-content:space-between;margin-bottom:8px;'>" +
+        "<span class='orb' style='font-size:8px;letter-spacing:3px;color:#374151;'>TARGET PROGRESS</span>" +
+        "<span class='orb' style='font-size:8px;color:" + c + ";'>" + Math.round(dpct) + "%</span>" +
+      "</div>" +
+      "<div style='height:8px;background:" + c + "12;border-radius:4px;overflow:hidden;border:1px solid " + c + "18;'>" +
+        "<div style='height:100%;width:" + dpct + "%;background:linear-gradient(90deg,#4338ca," + c + ");border-radius:4px;transition:width 0.5s ease;box-shadow:0 0 10px " + c + ";'></div>" +
+      "</div>" +
+      "<div style='display:flex;justify-content:space-between;margin-top:6px;'>" +
+        "<span class='orb' style='font-size:7px;color:#374151;'>0 mi</span>" +
+        "<span class='orb' style='font-size:7px;color:" + c + ";'>" + runTgt + " mi goal</span>" +
+      "</div>" +
+    "</div>" +
+    controlHtml +
+    "</div>"
+  );
+}
+
+function startRun() {
+  S.runCoords = []; S.runTime = 0; S.runDist = 0;
+  S.runDone = false; S.runSummary = null; S.gpsErr = null;
+  if (!navigator.geolocation) {
+    S.gpsErr = "Geolocation not supported. Open this file in Safari or Chrome.";
+    renderRun(); return;
+  }
+  wid = navigator.geolocation.watchPosition(
+    function(pos) {
+      S.runCoords.push([pos.coords.latitude, pos.coords.longitude]);
+      S.runDist = calcDist(S.runCoords);
+      S.gpsErr  = null;
+      if (S.runDist >= getRunTarget() && !S.runDone) { stopRun(true); return; }
+      if (S.cur === "run") renderRun();
+    },
+    function(err) {
+      S.gpsErr = err.message;
+      if (S.cur === "run") renderRun();
+    },
+    {enableHighAccuracy:true, maximumAge:2000, timeout:15000}
+  );
+  S.runActive = true;
+  runIv = setInterval(function() {
+    S.runTime++;
+    if (S.cur === "run") renderRun();
+  }, 1000);
+  renderRun();
+}
+
+function stopRun(auto) {
+  S.runActive = false;
+  if (wid !== null) { navigator.geolocation.clearWatch(wid); wid = null; }
+  clearInterval(runIv);
+  S.runDone    = true;
+  S.runSummary = {dist:S.runDist, time:S.runTime, pace:calcPace(S.runDist, S.runTime)};
+  if (auto) showOverlay("RUN COMPLETE","TARGET REACHED","クエスト完了","🏃");
+  checkComplete();
+  renderRun();
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATS
+// ─────────────────────────────────────────────────────────────────────────────
+function renderStats() {
+  var c      = getColor();
+  var s      = S.streak;
+  var workout= getWorkout();
+  var runTgt = getRunTarget();
+  var ri     = getRankIdx();
+  var rp     = getRankPct();
+  var rnk    = getRank();
+
+  var statItems = [
+    {l:"STREAK",   v:s,                 u:"days",  i:"🔥", sub:"連続日数"},
+    {l:"PUSH-UPS", v:workout[0].target, u:"reps",  i:"💪", sub:"腕立て"},
+    {l:"SIT-UPS",  v:workout[1].target, u:"reps",  i:"⚡", sub:"腹筋"},
+    {l:"SQUATS",   v:workout[2].target, u:"reps",  i:"🔥", sub:"スクワット"},
+    {l:"RUN",      v:runTgt,            u:"miles", i:"🏃", sub:"走る"},
+    {l:"RANK",     v:(ri+1)+"/6",       u:"",      i:"⭐", sub:"ランク"}
+  ];
+  var statHtml = "";
+  for (var i = 0; i < statItems.length; i++) {
+    var st = statItems[i];
+    statHtml +=
+      "<div class='sbox' style='border:1px solid " + c + "18;animation:slideUp 0.3s ease " + (i*0.06).toFixed(2) + "s both;'>" +
+        "<div style='font-size:20px;margin-bottom:6px;'>" + st.i + "</div>" +
+        "<div class='orb' style='font-size:22px;font-weight:900;color:" + c + ";text-shadow:0 0 12px " + c + ";'>" + st.v + "</div>" +
+        "<div style='font-size:8px;color:#4b5563;margin-top:2px;'>" + st.u + "</div>" +
+        "<div class='orb' style='font-size:6px;letter-spacing:3px;color:#374151;margin-top:4px;'>" + st.l + "</div>" +
+        "<div class='noto' style='font-size:7px;color:#1e293b;margin-top:2px;'>" + st.sub + "</div>" +
+      "</div>";
+  }
+
+  var ladderHtml = "";
+  for (var i = 0; i < RANKS.length; i++) {
+    var r   = RANKS[i];
+    var u   = i <= ri;
+    var cur = r === rnk;
+    var col = RC[r];
+    var thresh = ["0d","7d","15d","25d","40d","60d"][i];
+    ladderHtml +=
+      "<div style='text-align:center;flex:1;'>" +
+        "<div style='width:" + (cur?42:32) + "px;height:" + (cur?42:32) + "px;" +
+          "border-radius:" + (cur?"8px":"50%") + ";" +
+          "border:2px solid " + (u?col:"#1e293b") + ";" +
+          "background:" + (cur?col+"22":u?col+"08":"transparent") + ";" +
+          "display:flex;align-items:center;justify-content:center;margin:0 auto 5px;" +
+          "box-shadow:" + (cur?"0 0 16px "+col+",0 0 32px "+col+"40":"none") + ";transition:all 0.3s;'>" +
+          "<span class='orb' style='font-size:" + (cur?14:10) + "px;font-weight:900;color:" + (u?col:"#1e293b") + ";'>" + r + "</span>" +
+        "</div>" +
+        "<div class='orb' style='font-size:6px;color:" + (u?col+"70":"#1e293b") + ";letter-spacing:1px;'>" + thresh + "</div>" +
+      "</div>";
+  }
+
+  html("s-stats",
+    "<div>" +
+    // Rank card
+    "<div class='card' style='border:1px solid " + c + "45;margin-bottom:14px;text-align:center;box-shadow:0 0 60px " + c + "12;'>" +
+      "<div class='orb' style='position:absolute;top:10px;left:14px;font-size:6px;color:" + c + "40;letter-spacing:3px;'>◆ STATUS WINDOW</div>" +
+      "<div class='noto' style='position:absolute;top:10px;right:14px;font-size:7px;color:" + c + "40;'>ステータス ◆</div>" +
+      "<div class='noto' style='font-size:9px;color:#1e293b;letter-spacing:3px;margin-bottom:6px;margin-top:14px;'>現在のランク</div>" +
+      "<div class='orb' style='font-size:7px;letter-spacing:6px;color:" + c + ";margin-bottom:14px;'>CURRENT RANK</div>" +
+      "<div class='orb' style='font-size:96px;font-weight:900;color:" + c + ";line-height:1;margin-bottom:6px;" +
+        "text-shadow:0 0 30px " + c + ",0 0 80px " + c + "60;animation:rankPulse 2s ease infinite;'>" + rnk + "</div>" +
+      "<div class='noto' style='font-size:11px;color:#4b5563;margin-bottom:18px;letter-spacing:2px;'>" + RN[rnk] + "</div>" +
+      "<div style='height:8px;background:" + c + "12;border-radius:4px;overflow:hidden;border:1px solid " + c + "18;margin-bottom:6px;'>" +
+        "<div style='height:100%;width:" + rp + "%;background:linear-gradient(90deg,#4338ca," + c + ");border-radius:4px;box-shadow:0 0 10px " + c + ";transition:width 0.6s ease;'></div>" +
+      "</div>" +
+      "<div style='display:flex;justify-content:space-between;'>" +
+        "<span class='orb' style='font-size:7px;color:#374151;letter-spacing:2px;'>RANK EXP " + rp + "%</span>" +
+        "<span class='orb' style='font-size:7px;color:" + c + ";'>" + (ri < 5 ? "→ "+RANKS[ri+1]+" RANK" : "MAX RANK") + "</span>" +
+      "</div>" +
+    "</div>" +
+    "<div style='display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;'>" + statHtml + "</div>" +
+    "<div class='card' style='border:1px solid " + c + "18;'>" +
+      "<div class='orb' style='font-size:7px;letter-spacing:5px;color:#374151;margin-bottom:4px;'>RANK PROGRESSION</div>" +
+      "<div class='noto' style='font-size:7px;color:#1e293b;letter-spacing:2px;margin-bottom:14px;'>ランクの進行</div>" +
+      "<div style='display:flex;justify-content:space-between;align-items:flex-end;'>" + ladderHtml + "</div>" +
+    "</div>" +
+    "<div class='noto' style='text-align:center;font-size:8px;color:#1e293b;margin-top:14px;letter-spacing:3px;'>一人でレベルアップする</div>" +
+    "</div>"
+  );
+}
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+applyTheme();
+spawnParticles();
+renderHome();
+</script>
+</body>
+</html>
